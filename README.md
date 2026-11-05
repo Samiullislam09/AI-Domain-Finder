@@ -1,89 +1,108 @@
 # AI Domain Finder
 
 Ek simple Node.js tool jo khaali (available) `.com` domains dhoondta hai.
-Naam teen tareeqon se aate hain: AI se, random combinations se, ya aapki apni list se.
+Do script hain:
+
+| Script | Kaam |
+|--------|------|
+| `real domain name finder.mjs` | AI / brute / list se naam bana kar check karta hai |
+| `scan-all.mjs` | Bina AI ke, bade scan: saare 3-letter, 4-letter, ya 5-6 letter coined naam. Resume hota hai |
 
 ## Kaise kaam karta hai
 
-1. Naam generate hota hai (AI / brute / list).
+1. Naam generate hota hai (AI / brute / list / coined).
 2. Har naam ka DNS check hota hai (1.1.1.1 aur 8.8.8.8 se). DNS mila to domain taken hai.
-3. DNS nahi mila to Verisign RDAP (.com ka official registry) se confirm hota hai. Wahan bhi free nikla to **AVAILABLE**.
+3. DNS nahi mila to Verisign RDAP (`.com` ka official registry) se confirm hota hai. Wahan bhi free nikla to **AVAILABLE**.
 
 ## Requirements
 
 - [Node.js](https://nodejs.org) 18 ya usse naya (built-in `fetch` chahiye)
-- Sirf `ai` mode ke liye: NVIDIA API key (https://build.nvidia.com se free milti hai)
+- Sirf `ai` mode ke liye: NVIDIA API key (https://build.nvidia.com)
 
-Koi `npm install` nahi chahiye, yeh tool bina kisi package ke chalta hai.
+Koi `npm install` nahi chahiye.
 
-## Setup
+## Setup (sirf ai mode ke liye)
 
 1. `_env.example` ko copy karke `.env` naam do.
-2. `.env` mein apni key daalo:
+2. `.env` mein apni key aur model daalo:
 
 ```
 NVIDIA_API_KEY=nvapi-your-key-here
-NVIDIA_MODEL=nvidia/llama-3.3-nemotron-super-49b-v1
+NVIDIA_MODEL=nvidia/nemotron-3-ultra-550b-a55b
 ```
 
-`NVIDIA_MODEL` optional hai. Na likho to default model use hoga.
-`brute` aur `list` mode ko key ki zaroorat nahi.
+NVIDIA ke models badalte rehte hain. Agar `404` ya "model not found" aaye to build.nvidia.com par chalta hua model dekh kar `NVIDIA_MODEL` badlo. Bade reasoning models slow hote hain, chhota model tez rehta hai.
 
-## Run karna
+`.env` kabhi GitHub par push mat karo (`.gitignore` mein pehle se hai).
 
-Folder mein terminal kholo aur:
+## 1) real domain name finder.mjs
 
 ```
 node "real domain name finder.mjs"
 ```
 
-Default mein `ai` mode chalta hai. Rokne ke liye `Ctrl+C` dabao. Report phir bhi likhi jati hai.
-
-## Modes
+Default: `ai` mode, 4 se 8 letter, 20 domain milne tak chalta hai. `Ctrl+C` se roko, report phir bhi likhi jati hai.
 
 | Mode | Kya karta hai | Example |
 |------|---------------|---------|
 | `ai` | NVIDIA AI se brand-type naam mangwata hai | `node "real domain name finder.mjs" --mode ai` |
-| `brute` | Random bolne layak letters banata hai | `node "real domain name finder.mjs" --mode brute --min 4 --max 4` |
+| `brute` | Random bolne layak letters banata hai | `node "real domain name finder.mjs" --mode brute --minLen 4 --maxLen 4` |
 | `list` | `my-list.txt` se naam leta hai (ek line = ek naam) | `node "real domain name finder.mjs" --mode list` |
-
-## Options
-
-Command line se, ya file ke upar `CONFIG` mein badlo:
 
 | Flag | Matlab | Default |
 |------|--------|---------|
 | `--mode` | `ai`, `brute` ya `list` | `ai` |
-| `--min` / `--max` | Naam mein kam se kam / zyada se zyada letters | `4` / `4` |
+| `--minLen` / `--maxLen` | Naam mein kam se kam / zyada se zyada letters | `4` / `8` |
 | `--want` | Itne available domains milte hi ruk jao | `20` |
-| `--limit` | Maximum kitne naam check karne hain | `5000` |
-| `--pattern` | brute mode: `pronounceable` ya `any` | `pronounceable` |
+| `--limit` | Maximum kitne naam check karne hain | `50000` |
+| `--batchSize` | ai mode: ek round mein AI se kitne naam maangne hain | `100` |
 | `--style` | ai mode: kis type ke naam chahiye | `tech / AI / marketing brand` |
+| `--pattern` | brute mode: `pronounceable` ya `any` | `pronounceable` |
 | `--listFile` | list mode: file ka naam | `my-list.txt` |
-
-> Flags ke naam `minLen` / `maxLen` ke hisaab se `CONFIG` mein hain, isliye command line mein `--minLen 5 --maxLen 7` likho.
 
 Example:
 
 ```
-node "real domain name finder.mjs" --mode ai --minLen 5 --maxLen 7 --want 10 --style "travel startup"
+node "real domain name finder.mjs" --minLen 5 --maxLen 7 --want 10 --style "travel startup"
 ```
 
-## Output
+AI ka round khali ya repeat aaye to script dobara try karti hai (lagataar 25 baar khali aaye tabhi rukti hai). Network fail ya timeout par bhi retry hota hai.
 
-Sab kuch `results/` folder mein banta hai:
+Output `results/` mein: `available-domains.txt`, `report.txt`, `all-checked.csv`.
 
-- `available-domains.txt`: sirf free domains
-- `report.txt`: poori summary (kitne check hue, kitne taken, AI ne kitne naam diye)
-- `all-checked.csv`: har naam ka result
+## 2) scan-all.mjs (bina AI ke)
 
-## Tips
+```
+# 3-letter, phir 4-letter (bahut kam free milte hain)
+node scan-all.mjs --want 5
 
-- 3 se 5 letter ke famous-type naam lagbhag sab pehle se taken hote hain. Zyada hit chahiye to letters badhao (6 se 8) ya `--style` mein kuch alag likho.
-- Agar `Galat flag` error aaye to flag ka naam upar wali table se check karo.
-- Domain mil jaye to register karne se pehle kisi registrar (Namecheap, GoDaddy, etc.) par ek baar dobara confirm kar lo.
+# 5-6 letter brand jaise naam (sabse zyada free milte hain)
+node scan-all.mjs --mode coined --want 20 --min 5 --max 6
+```
 
-## Push karne se pehle
+| Flag | Matlab | Default |
+|------|--------|---------|
+| `--want` | Itne free domains milte hi ruk jao | `5` |
+| `--conc` | Ek saath kitne check (memory kam ho to 20-30 karo) | `50` |
+| `--mode coined` | 5-6 letter bolne layak random naam | (band) |
+| `--min` / `--max` | coined mode: letters | `5` / `6` |
+| `--limit` | coined mode: max kitne naam check karne hain | `200000` |
 
-- `.env` ko kabhi push mat karo. `.gitignore` mein `.env` aur `results/` daal do.
-- `_env.example` mein sirf placeholder rakho, asli key nahi.
+Resume: dekhe hue har naam `results/scan-checked.txt` mein save hote hain. Rok kar dobara chalao to wahin se aage chalega, dobara check nahi karega.
+
+Output `results/` mein:
+
+- `scan-FOUND.txt`: free domains
+- `scan-checked.txt`: har dekha hua naam (`naam,taken` ya `naam,free`)
+- `scan-status.txt`: live progress
+
+## Pata hona chahiye
+
+- Saare 3-letter `.com` aur lagbhag saare 4-letter bolne layak `.com` pehle se registered hain. Free domain 5-6 letter ke coined naam mein milta hai.
+- "Free" ka matlab hai abhi registry mein registered nahi dikha. Khareedne se pehle registrar (Namecheap, GoDaddy) par confirm karo aur trademark check karo.
+- Bahut zyada parallel checks (`--conc`) se memory ya timeouts badh sakte hain.
+
+## GitHub par push karne se pehle
+
+- `.env` push mat karo, `_env.example` mein sirf placeholder rakho.
+- `results/` bhi `.gitignore` mein hai.
