@@ -1,0 +1,36 @@
+{
+ "scanned": 9906,
+ "free": 2,
+ "runs": 1,
+ "cursor": 9880,
+ "aiOk": 1,
+ "aiFail": 2,
+ "updated": "2026-11-09T10:48:54.989Z",
+ "history": {
+  "2026-11-09": {
+   "s": 9906,
+   "f": 2
+  }
+ },
+ "len": "8-10",
+ "words": 2,
+ "bad": [
+  "nvidia/nemotron-3.5-bolt",
+  "nvidia/nemotron-3-nano-omni",
+  "z.ai/glm-5-3-flash",
+  "microsoft/phi-3.5-moe-instruct",
+  "mistralai/mistral-large-2-instruct",
+  "nvidia/llama-3.1-nemotron-51b-instruct",
+  "mistralai/mistral-large",
+  "nvidia/llama-3.1-nemotron-70b-instruct",
+  "nvidia/llama3-chatqa-1.5-70b"
+ ],
+ "slow": {
+  "google/gemma-4-31b-it": 2,
+  "deepseek-ai/deepseek-v4.1-flash": 2,
+  "mistralai/mistral-large-4-1t-a52b": 2,
+  "meta/muse-glimmer-30b": 1
+ },
+ "goodModel": "",
+ "model": "meta/muse-glimmer-30b"
+}
