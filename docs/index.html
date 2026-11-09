@@ -113,11 +113,12 @@
   #sentinel{height:1px}
   .end{padding:16px 0 0;text-align:center;color:var(--mut);font-size:13px}
   @media (min-width:900px){
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{padding:18px 16px 18px 20px}
-    .card:nth-child(-n+2){border-top:0}
-    .card:nth-child(2n){border-left:1px solid var(--line)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:none;border:0;border-radius:0;overflow:visible}
+    .card{padding:16px 14px 16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+    .card:first-child{border-top:1px solid var(--line)}
+    .card:hover{background:var(--surface);border-color:var(--brand)}
   }
+  @media (min-width:1800px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
   /* activity */
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
@@ -212,7 +213,7 @@
     .topbar-in{max-width:none;height:64px;padding:0 24px;gap:32px}
     .wrap{max-width:none;padding:0}
     #t-saved,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
-    .content{padding:24px 28px 0 20px;max-width:1560px}
+    .content{padding:20px 12px 0 12px}
     .head h1{font-size:30px;margin-top:0}
     .head p{font-size:15px}
     .discover{display:grid;grid-template-columns:240px minmax(0,1fr);gap:0;align-items:start}
