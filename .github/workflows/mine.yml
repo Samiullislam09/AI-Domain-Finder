@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: 20
       - name: Mine ${{ matrix.len }} letter
+        timeout-minutes: 25
+        continue-on-error: true
         run: node miner.mjs
         env:
           LEN: ${{ matrix.len }}
@@ -32,6 +34,7 @@ jobs:
           NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL }}
           MINE_MINUTES: "20"
       - name: Save results
+        if: ${{ !cancelled() }}
         run: |
           git config user.name "domain-miner"
           git config user.email "domain-miner@users.noreply.github.com"

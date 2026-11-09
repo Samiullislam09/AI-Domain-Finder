@@ -63,9 +63,9 @@ const rnd = mulberry(Date.now() & 0x7fffffff), pick = (a) => a[Math.floor(rnd() 
 function genOne(L) { // exact L letter ka bolne layak naam: word+word ya syllable+syllable
   for (let t = 0; t < 80; t++) {
     let n = "";
-    if (L >= 6 && rnd() < 0.5) { const a = pick(WORDS), rest = byLen[L - a.length]; if (rest) n = a + pick(rest); }
-    if (!n) { let prev = ""; while (n.length + 1 < L) { const sy = pick(SYL); if (sy === prev) continue; prev = sy; n += sy; } if (n.length < L) n += pick(CODA); }
-    if (n.length === L && [...n].filter(isV).length >= 2 && !tried.has(n)) { tried.add(n); return n; }
+    if (L >= 6 && (L >= 8 || rnd() < 0.5)) { const a = pick(WORDS), rest = byLen[L - a.length]; if (rest) n = a + pick(rest); }
+    if (!n && L < 8) { let prev = ""; while (n.length + 1 < L) { const sy = pick(SYL); if (sy === prev) continue; prev = sy; n += sy; } if (n.length < L) n += pick(CODA); }
+    if (n && n.length === L && [...n].filter(isV).length >= 2 && !tried.has(n)) { tried.add(n); return n; }
   }
   return null;
 }
@@ -106,7 +106,7 @@ async function loadModels() {
 
 let round = 0;
 async function aiBatch() {
-  if (!KEY) return [];
+  if (!KEY || Date.now() > deadline - 5 * 60000) return [];
   const [cat, desc] = THEMES[(stats.runs + round++) % THEMES.length];
   const avoid = [...aiSeen].slice(-150).join(", ") || "none";
   const prompt = `You are a brand naming expert. Product: ${PRODUCT}.
