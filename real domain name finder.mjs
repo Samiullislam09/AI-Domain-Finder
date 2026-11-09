@@ -160,7 +160,7 @@ Reply with ONLY a JSON array of strings.`;
         method: "POST",
         headers: { Authorization: `Bearer ${NVIDIA_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: NVIDIA_MODEL, temperature: 1.0, max_tokens: Math.max(8000, CONFIG.batchSize * 60), messages: [{ role: "user", content: prompt }] }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(150000),
       });
       if (res.ok) break;
       const body = (await res.text()).slice(0, 200);

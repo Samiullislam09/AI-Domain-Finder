@@ -101,8 +101,8 @@ Reply with ONLY a JSON array of strings.`;
     try {
       const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST", headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: MODEL, temperature: 1.0, max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
-        signal: AbortSignal.timeout(60000),
+        body: JSON.stringify({ model: MODEL, temperature: 1.0, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
+        signal: AbortSignal.timeout(170000),
       });
       if (res.status === 404 || res.status === 410) { await pickModel(); continue; }
       if (!res.ok) throw new Error("HTTP " + res.status);
