@@ -78,13 +78,30 @@ const THEMES = [
   ["AI: Automation & AI brands", "names fitting an AI automation product, like DeepSeek, Jasper, Zapier, Copilot, Autopilot"],
 ];
 
-async function pickModel() {
+// ---------- brand-quality filter: random / Russian-type naam yahin ruk jate hain ----------
+function looksBrand(n) {
+  if (/[^aeiouy]{5,}/.test(n)) return false;                         // 4 consonant ek saath (hard)
+  if (/[aeiou]{3,}/.test(n) || /(.)/.test(n) || /uu|ii|yy|jj|qq|vv|ww|xx/.test(n)) return false;
+  if (/(ovich|vich|ovna|ski|skiy|shch|zhk|zhn|zhd|kh|vsk|tsk|tsv|ov|ova|ev|eva|iy|yy|yev|yov|nko|ko$|vo$|zh)/.test(n) && !/(love|clove|stove|novel|hover|cover|lover|over|move|trove|dove|wove|ever|never|clever|seven|even|devo)/.test(n)) return false; // Russian/Slavic jaise
+  if (/q(?!u)/.test(n) || /[bcdfghjklmnpqrstvwxz]$/.test(n) && /[xzqj]$/.test(n)) return false;
+  const v = [...n].filter((c) => isV(c) || c === "y").length; if (v / n.length < 0.28 || v / n.length > 0.65) return false;
+  return true;
+}
+
+// ---------- model auto-select: tez + achha (chhota/medium instruct pehle, slow ultra/reasoning peeche) ----------
+let RANKED = null;
+async function loadModels() {
+  if (RANKED) return RANKED;
+  RANKED = [];
   try {
     const r = await fetch("https://integrate.api.nvidia.com/v1/models", { headers: { Authorization: `Bearer ${KEY}` }, signal: AbortSignal.timeout(30000) });
-    const ids = (await r.json()).data.map((m) => m.id).filter((id) => /nemotron|llama-3|llama-4|mistral|qwen|gemma/i.test(id) && !/embed|rerank|vision|vl|guard|safety|reward|parse|clip|retriev/i.test(id));
-    ids.sort((a, b) => (/super|nano/.test(b) ? 1 : 0) - (/super|nano/.test(a) ? 1 : 0));
-    if (ids[0]) { MODEL = ids[0]; console.log("Model badla:", MODEL); }
-  } catch {}
+    const ids = (await r.json()).data.map((m) => m.id).filter((id) => /nemotron|llama|mistral|qwen|gemma|deepseek|phi|granite/i.test(id) && !/embed|rerank|vision|guard|safety|reward|parse|clip|retriev|code|math|translate|vila|ocr|asr|tts|arctic|-vl|vl-/i.test(id));
+    const size = (id) => { const m = id.match(/(\d+(?:\.\d+)?)b/i); return m ? +m[1] : 50; };
+    const cost = (id) => { let c = Math.abs(Math.log(size(id) / 50)); if (/ultra|r1|reason|think|405b|235b|480b|550b|253b/i.test(id)) c += 3; if (size(id) < 8) c += 3; if (/instruct|chat/i.test(id)) c -= 0.3; return c; };
+    RANKED = ids.sort((x, y) => cost(x) - cost(y)).slice(0, 6);
+    console.log("Model order:", RANKED.join(" > "));
+  } catch (e) { console.log("Model list fail:", e.message); }
+  return RANKED;
 }
 
 let round = 0;
@@ -94,38 +111,42 @@ async function aiBatch() {
   const avoid = [...aiSeen].slice(-150).join(", ") || "none";
   const prompt = `You are a brand naming expert. Product: ${PRODUCT}.
 Give 80 brand-name candidates for a .com domain. Style: ${desc}.
-Rules: lowercase a-z only, ${LEN ? "EXACTLY " + LEN : "5 to 8"} letters, no digits or hyphens, easy to say and spell, real-brand feel (like Zapier, Groq, Hulu, Canva), made of real English words or natural syllables, NOT random letter strings, NO foreign/Russian-sounding names.
+Rules: lowercase a-z only, ${LEN ? "EXACTLY " + LEN : "5 to 8"} letters, no digits or hyphens, easy to say and spell in English, real-brand feel (like Zapier, Groq, Hulu, Canva).
+Each name must be a real English word, two real English words joined, or an obvious English word with a tiny spelling twist. NEVER random letter strings, NEVER Russian/Slavic/Hindi-sounding names, no -ov/-ova/-ski/-ino/-ora endings.
 Do NOT repeat: ${avoid}
 Reply with ONLY a JSON array of strings.`;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const list = await loadModels();
+  const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...list, process.env.NVIDIA_MODEL].filter(Boolean))].slice(0, 4);
+  for (const model of tryModels) {
     try {
       const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST", headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: MODEL, temperature: 1.0, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
-        signal: AbortSignal.timeout(170000),
+        body: JSON.stringify({ model, temperature: 1.0, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
+        signal: AbortSignal.timeout(90000),
       });
-      if (res.status === 404 || res.status === 410) { await pickModel(); continue; }
       if (!res.ok) throw new Error("HTTP " + res.status);
       const j = await res.json(); const ch = j.choices?.[0]?.message;
       const text = ch?.content || ch?.reasoning_content || "";
       let arr = []; const m = text.match(/\[[\s\S]*\]/);
       if (m) try { arr = JSON.parse(m[0]); } catch {}
-      if (!arr.length) arr = [...text.matchAll(/"([A-Za-z]{4,10})"/g)].map((x) => x[1]);
+      if (!arr.length) arr = [...text.matchAll(/"([A-Za-z]{4,12})"/g)].map((x) => x[1]);
       const out = [];
       for (const raw of arr) {
         const n = String(raw).toLowerCase().trim().replace(/\.com$/, "");
         if (!(LEN ? new RegExp(`^[a-z]{${LEN}}$`) : /^[a-z]{5,8}$/).test(n) || aiSeen.has(n)) continue;
-        aiSeen.add(n); appendFileSync(F_CHECKED, n + "\n"); out.push({ n, cat });
+        aiSeen.add(n); appendFileSync(F_CHECKED, n + "\n");
+        if (looksBrand(n)) out.push({ n, cat });
       }
-      if (out.length) { stats.aiOk++; return out; }
-    } catch (e) { console.log("AI fail:", e.message); await sleep(2000 * (attempt + 1)); }
+      if (out.length) { stats.aiOk++; stats.goodModel = MODEL = model; return out; }
+      console.log("AI khali/filter:", model);
+    } catch (e) { console.log("AI fail:", model, e.message); if (stats.goodModel === model) stats.goodModel = ""; }
   }
   stats.aiFail++;
   return [];
 }
 function syllableBatch(k = 60) {
   const out = [];
-  if (LEN) { for (let i = 0; i < k; i++) { const n = genOne(LEN); if (n) out.push({ n, cat: `Generated ${LEN} letter` }); } return out; }
+  if (LEN) { for (let i = 0; i < k; i++) { const n = genOne(LEN); if (n && looksBrand(n)) out.push({ n, cat: `Generated ${LEN} letter` }); } return out; }
   for (let i = 0; i < k; i++) out.push({ n: SYLNAMES[stats.cursor++ % SYLNAMES.length], cat: "Phonetic syllables (6 letter / 5 letter)" });
   return out;
 }
