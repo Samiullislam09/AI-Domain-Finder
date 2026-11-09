@@ -149,8 +149,6 @@
   .tk{background:var(--press);color:var(--mut);font-size:11.5px;font-weight:600;line-height:1;padding:3px 7px;border-radius:5px}
   .gone{flex:none;color:var(--mut);font-size:13px;font-weight:600;padding:0 8px}
   .gone-card .name{opacity:.6}
-  .vf{color:var(--ok);font-weight:600}
-  .vf:empty{display:none}
   /* activity */
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
   .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px}
@@ -438,10 +436,7 @@ const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["oth
 const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
-const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
-st.vf = LS.get("dm.vf", {});          // live-check results saved on this device: name -> { s: "free"|"taken", t: time }
-st.bought = LS.get("dm.bought", {});  // names this browser found taken
-st.gb = {}; st.takenTotal = 0;          // names the server re-verify job found taken (same for everyone)
+st.gb = {}; st.takenTotal = 0; // names the server re-verify job found registered (same for everyone)
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
@@ -462,64 +457,12 @@ function nameHTML(x) { // words are shown in alternating colour so long names re
   if (parts.length > 1 && parts.join("") === x.n) return parts.map((w, i) => (i % 2 ? `<span class="p1">${w}</span>` : w)).join("");
   return x.n;
 }
-/* ---------- live availability check: browser -> Verisign RDAP (CORS enabled). Every visible name is verified once per 20 minutes. ---------- */
-const VF_TTL = 20 * 60000, checking = new Set(), vq = [];
-let vActive = 0, vOk = 0, vFail = 0, vTimer = 0;
-const allBought = () => ({ ...st.gb, ...st.bought });
-const boughtCount = () => Math.max(Object.keys(allBought()).length, st.takenTotal || 0);
+/* ---------- names the server's re-verify job found registered (same list for everyone) ---------- */
+const boughtCount = () => Math.max(Object.keys(st.gb).length, st.takenTotal || 0);
 const heading = () => (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " · loading full list" : "");
-function vfText(n) { const r = st.vf[n]; return checking.has(n) ? "checking…" : r && r.s === "free" && Date.now() - r.t < VF_TTL ? "live checked" : ""; }
-function setVf(n) { const t = vfText(n); document.querySelectorAll(`[data-vf="${n}"]`).forEach((e) => { e.textContent = t; }); }
-function saveVf() {
-  clearTimeout(vTimer);
-  vTimer = setTimeout(() => { const now = Date.now(), keep = {}; Object.entries(st.vf).filter(([, r]) => now - r.t < VF_TTL * 6).slice(-1500).forEach(([k, r]) => { keep[k] = r; }); st.vf = keep; LS.set("dm.vf", keep); }, 800);
-}
-function verifyNames(names) {
-  if (st.vOff) return;
-  for (const n of names) {
-    const r = st.vf[n];
-    if ((r && Date.now() - r.t < VF_TTL) || checking.has(n) || st.bought[n] || st.gb[n]) { setVf(n); continue; }
-    checking.add(n); vq.push(n); setVf(n);
-  }
-  pump();
-}
-const verifyDom = (root) => { if (root) verifyNames(Array.from(root.querySelectorAll("[data-vf]")).map((e) => e.dataset.vf).slice(0, 80)); };
-async function rdap(n) {
-  try { const r = await fetch(`https://rdap.verisign.com/com/v1/domain/${n}.com`, { headers: { Accept: "application/rdap+json" }, signal: AbortSignal.timeout(9000) }); return r.status === 404 ? "free" : r.status === 200 ? "taken" : null; } catch { return null; }
-}
-function pump() {
-  while (vActive < 3 && vq.length && !st.vOff) {
-    const n = vq.shift(); vActive++;
-    rdap(n).then((res) => {
-      vActive--; checking.delete(n);
-      if (res) { vOk++; st.vf[n] = { s: res, t: Date.now() }; saveVf(); if (res === "taken") markBought(n); else setVf(n); }
-      else { vFail++; setVf(n); if (vFail >= 12 && !vOk) st.vOff = true; } // registry blocked for this browser: stop trying
-      setTimeout(pump, 150);
-    });
-  }
-}
-function applyBought() { const b = allBought(); if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
+function applyBought() { const b = st.gb; if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
 function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
 function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; $("homeStat").innerHTML = h; }
-function refreshTops() {
-  if (st.tab === "home") renderHome();
-  else if (st.tab === "discover" && !$("topSec").hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.map(cardHTML).join(""); verifyDom($("top")); }
-}
-function markBought(n) { // someone registered it: remove from every list, count it under "Bought"
-  if (st.bought[n] || st.gb[n]) return;
-  const x = st.all.find((y) => y.n === n) || st.topPre.find((y) => y.n === n); if (!x) return;
-  st.bought[n] = { n: x.n, cat: x.cat, s: x.s, t: x.t, m: x.m, p: x.p, q: x.q, bt: new Date().toISOString() };
-  LS.set("dm.bought", st.bought);
-  const drop = (a) => a.filter((y) => y.n !== n);
-  st.all = drop(st.all); st.topPre = drop(st.topPre); st.cur = drop(st.cur); st.shown = Math.min(st.shown, st.cur.length);
-  st.free = Math.max(0, st.free - 1);
-  document.querySelectorAll(`#list [data-card="${n}"], #top [data-card="${n}"], #homeTop [data-card="${n}"]`).forEach((e) => e.remove());
-  updateBought(); updateStrip(); toast(n + ".com was just registered by someone else");
-  if (st.tab === "discover") { computeFacets(); renderPanel(); $("allH").textContent = heading(); }
-  refreshTops();
-  if (st.tab === "saved") renderSaved();
-  if (st.tab === "bought") renderBought();
-}
 function cardHTML(x) {
   const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") ? x.m : "", gone = !!x.taken;
   const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
@@ -530,7 +473,7 @@ function cardHTML(x) {
         <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
       </div>
       ${mean ? `<p class="c-meaning">${esc(mean)}</p>` : ""}
-      <p class="meta">${gone ? '<span class="tk">Taken</span>' : '<span class="ok">Available</span>'}<span>${esc(meta)}</span>${gone ? "" : `<span class="vf" data-vf="${x.n}">${vfText(x.n)}</span>`}</p>
+      <p class="meta">${gone ? '<span class="tk">Taken</span>' : '<span class="ok">Available</span>'}<span>${esc(meta)}</span></p>
     </div>
     ${gone ? '<span class="gone">Registered</span>' : `<a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg><use href="#i-arrow"/></svg></a>`}
   </article>`;
@@ -584,7 +527,6 @@ function appendMore() {
   if (st.shown >= st.cur.length) return;
   const next = st.cur.slice(st.shown, st.shown + 36); st.shown += next.length;
   $("list").insertAdjacentHTML("beforeend", next.map(cardHTML).join(""));
-  verifyNames(next.map((x) => x.n));
   $("end").hidden = st.partial || st.shown < st.cur.length || st.cur.length < 36;
 }
 function fill() { let g = 0; while (st.tab === "discover" && st.shown < st.cur.length && $("sentinel").getBoundingClientRect().top < innerHeight + 900 && g++ < 80) appendMore(); }
@@ -615,28 +557,25 @@ function renderDiscover() {
   computeFacets(); renderPanel(); renderApplied();
   const topSec = $("topSec"); topSec.hidden = !!isFiltering();
   if (!topSec.hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
-  verifyDom($("top")); // top picks are checked first
   $("allH").textContent = heading();
   if (st.partial) { $("list").innerHTML = '<div class="card sk"><i></i><i></i></div>'.repeat(8); return; } // full list is still loading
   if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
   fill();
 }
 function renderSaved() {
-  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(allBought()).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
+  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(st.gb).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
   $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
   $("saved").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark on a name to keep it here.");
-  verifyDom($("saved"));
 }
 function renderBought() {
-  const r = Object.values(allBought()).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
+  const r = Object.values(st.gb).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
   $("boughtSub").textContent = r.length ? n0(r.length) + (r.length === 1 ? " name was" : " names were") + " available when we found them and have since been registered." : "Names from our list that someone else has registered.";
-  $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Names are checked live while you browse.");
+  $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Our server re-checks the names regularly.");
 }
 function renderHome() {
   updateStrip();
   const t = st.topPre.length ? topPicks().slice(0, 6) : st.all.length ? topPicksLegacy().slice(0, 6) : [];
   $("homeTop").innerHTML = t.length ? t.map(cardHTML).join("") : '<div class="card sk"><i></i><i></i></div>'.repeat(6);
-  verifyDom($("homeTop"));
 }
 const render = () => (st.tab === "home" ? renderHome() : st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : st.tab === "bought" ? renderBought() : 0);
 
@@ -744,7 +683,7 @@ const idb = {
 const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 function applySummary(d) {
   st.gb = {}; for (const x of d.taken || []) st.gb[x.n] = x; st.takenTotal = d.takenTotal || 0;
-  st.scanned = d.scanned; st.upd = d.updated; st.free = Math.max(0, d.free - Object.keys(st.bought).filter((n) => !st.gb[n]).length); // server already removed its own taken names
+  st.scanned = d.scanned; st.upd = d.updated; st.free = d.free; // the server already removed the taken names
   updateBought();
   const pl = d.topPool || d.top; if (pl && d.cats) { st.topPre = pl.map((t) => fromTuple(t, d.cats)); applyBought(); } // top picks come from one place (the index builder)
   $("updTop").textContent = "Updated " + ago(d.updated);
