@@ -66,6 +66,9 @@
   .chip small,.seg button small{color:var(--mut);font-size:12px;font-weight:500}
   .chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--tint);border-color:var(--brand);color:var(--brand)}
   .chip[aria-pressed="true"] small,.seg button[aria-pressed="true"] small{color:var(--brand)}
+  .select{width:100%;height:40px;padding:0 36px 0 12px;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23626878' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;-webkit-appearance:none;appearance:none;font-size:14px;font-weight:550;color:var(--ink);cursor:pointer;transition:border-color .15s var(--ease)}
+  .select:hover,.select:focus{border-color:var(--brand)}
+  .select.m-only{margin-top:12px;height:44px;border-radius:12px}
   .opts{display:flex;flex-direction:column;gap:2px}
   .opts button{display:flex;align-items:center;justify-content:space-between;gap:8px;height:36px;padding:0 10px;border-radius:var(--r-inner);font-size:14px;font-weight:550;text-align:left;transition:background .15s var(--ease),color .15s var(--ease)}
   .opts button small{color:var(--mut);font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
@@ -191,10 +194,7 @@
     .filters .group{margin-top:10px}
     .filters .group:first-of-type{margin-top:6px}
     .group-l{padding:0 6px;margin:0 0 4px;font-size:11px}
-    .filters #fTopic{flex-direction:column;gap:0;flex-wrap:nowrap}
-    .filters #fTopic button{height:27px;width:100%;padding:0 8px;border:0;border-radius:6px;background:none;justify-content:space-between;font-size:13.5px}
-    .filters #fTopic button:hover{background:var(--press)}
-    .filters #fTopic button[aria-pressed="true"]{background:var(--tint)}
+    .m-only{display:none}
     .filters .seg{gap:4px;padding:0 4px;flex-wrap:nowrap}
     .filters .seg button{height:28px;padding:0 9px;font-size:13px;flex:1 1 auto;justify-content:center}
     .tools{margin-top:16px}
@@ -238,7 +238,7 @@
     <div class="discover">
       <aside class="filters" id="sheet" aria-label="Filters">
         <div class="sheet-h"><h2>Filters</h2><button class="iconbtn" id="closeF" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
-        <div class="group desk"><p class="group-l">Topic</p><div class="seg" id="fTopic"></div></div>
+        <div class="group desk"><p class="group-l">Topic</p><select class="select" id="fTopic" aria-label="Topic"></select></div>
         <div class="group desk"><p class="group-l">Words</p><div class="seg" id="fWords"></div></div>
         <div class="group"><p class="group-l">Length</p><div class="seg" id="fLen"></div></div>
         <div class="group"><p class="group-l">Sort by</p><div class="seg" id="fSort"></div></div>
@@ -257,7 +257,7 @@
           <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
           <button class="iconbtn" id="openF" aria-label="Length and sort"><svg><use href="#i-filter"/></svg></button>
         </div>
-        <div class="chips" id="cTopic" aria-label="Topic"></div>
+        <select class="select m-only" id="cTopic" aria-label="Topic"></select>
         <div class="chips" id="cWords" aria-label="Words"></div>
 
         <section class="sec" id="topSec">
@@ -444,8 +444,8 @@ function drawFilters() {
   const topicOpts = [["", "All topics", n0(tot)], ...[...TOPICS.map((t) => t[0]), "other"].filter((id) => (c.t[id] || 0) > 0).map((id) => [id, TOPIC_NAME[id], n0(c.t[id])])];
   const wordOpts = [[0, "Any words", n0(tot)], ...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, w + (w > 1 ? " words" : " word"), n0(c.w[w])])];
   const lenOpts = [[0, "Any length"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]];
-  seg($("cTopic"), topicOpts, "topic", "chip"); seg($("cWords"), wordOpts, "words", "chip");
-  seg($("fTopic"), topicOpts, "topic", ""); seg($("fWords"), [...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, String(w)])], "words", "", false); seg($("fLen"), [[6, "≤ 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len", "", false);
+   seg($("cWords"), wordOpts, "words", "chip");
+  for (const el of [$("cTopic"), $("fTopic")]) { el.innerHTML = topicOpts.map(([v, l, n]) => `<option value="${v}">${l} (${n})</option>`).join(""); el.value = st.topic; } seg($("fWords"), [...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, String(w)])], "words", "", false); seg($("fLen"), [[6, "≤ 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len", "", false);
   seg($("fSort"), [["best", "Best"], ["short", "Short"], ["new", "New"], ["az", "A-Z"]], "sort", "", false);
   $("openF").dataset.on = st.len || st.sort !== "best" ? "1" : "0";
 }
@@ -466,6 +466,7 @@ document.addEventListener("click", (e) => {
   else if (t.id === "toTop") scrollTo({ top: 0, behavior: "smooth" });
 });
 $("scrim").onclick = () => sheet(false);
+["cTopic", "fTopic"].forEach((id) => $(id).addEventListener("change", (e) => { st.topic = e.target.value; scrollTo(0, 0); renderDiscover(); }));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
 $("q").addEventListener("input", (e) => { st.q = e.target.value; renderDiscover(); });
 new IntersectionObserver((e) => { if (e[0].isIntersecting) fill(); }, { rootMargin: "900px" }).observe($("sentinel"));
