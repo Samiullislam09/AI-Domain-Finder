@@ -46,12 +46,9 @@
   .head h1{font-size:22px;line-height:1.2;margin:8px 0 4px;letter-spacing:-.01em}
   .head p{margin:0;color:var(--mut);font-size:14px}
 
-  /* stat strip */
-  .strip{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
-  .strip div{padding:12px 16px;border-left:1px solid var(--line)}
-  .strip div:first-child{border-left:0}
-  .strip b{display:block;font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .strip span{display:block;color:var(--mut);font-size:12.5px;margin-top:2px}
+  /* stat line */
+  .statline{margin:12px 0 0;color:var(--mut);font-size:14px}
+  .statline b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
 
   /* search */
   .tools{display:flex;gap:8px;margin:16px 0 0}
@@ -82,26 +79,29 @@
   .sec-sub{color:var(--mut);font-size:13px;margin:0 0 12px}
   .surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
 
-  /* domain cards: one list on phones, card grid from 600px */
+  /* domain rows: one list on phones, two columns on desktop */
   .grid{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
   .grid:empty{display:none}
-  .card{display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;border-top:1px solid var(--line)}
+  .card{display:flex;align-items:center;gap:12px;padding:16px 12px 16px 16px;border-top:1px solid var(--line);transition:background .15s var(--ease)}
   .card:first-child{border-top:0}
+  .card:hover{background:var(--bg)}
   .c-main{flex:1;min-width:0}
-  .name{display:block;max-width:100%;text-align:left;font-size:18px;font-weight:650;letter-spacing:-.01em;line-height:1.25;overflow-wrap:anywhere;border-radius:var(--r-inner);transition:opacity .15s var(--ease)}
-  .name.long{font-size:16px}
+  .c-top{display:flex;align-items:center;gap:2px;min-width:0}
+  .name{display:block;min-width:0;text-align:left;font-size:19px;font-weight:650;letter-spacing:-.01em;line-height:1.25;overflow-wrap:anywhere;border-radius:var(--r-inner);transition:opacity .15s var(--ease)}
+  .name.long{font-size:17px}
   .name:active{opacity:.55}
   .name .p1{color:var(--brand)}
   .name .tld{color:var(--mut);font-weight:500;white-space:nowrap}
   .c-meaning{margin:2px 0 0;color:var(--ink);opacity:.8;font-size:13.5px;line-height:1.35}
   .meta{margin:6px 0 0;color:var(--mut);font-size:12.5px;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
-  .ok{background:var(--ok);color:var(--ok-ink);font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:6px}
-  .acts{display:flex;align-items:center;gap:4px}
-  .save{width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
+  .ok{background:var(--ok);color:var(--ok-ink);font-size:11.5px;font-weight:600;line-height:1;padding:3px 7px;border-radius:5px}
+  .save{width:32px;height:32px;flex:none;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
+  .save svg{width:18px;height:18px}
   .save:active,.save:hover{background:var(--press)}
   .save[aria-pressed="true"]{color:var(--brand)}
   .save[aria-pressed="true"] svg{fill:currentColor}
-  .buy{height:40px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--brand);color:var(--brand-ink);border-radius:var(--r-inner);font-weight:600;font-size:14px;text-decoration:none;transition:background .15s var(--ease)}
+  .buy{flex:none;height:32px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--brand);color:var(--brand-ink);border-radius:var(--r-inner);font-weight:600;font-size:13px;text-decoration:none;transition:background .15s var(--ease)}
+  .buy svg{width:14px;height:14px}
   .buy:hover,.buy:active{background:var(--brand-press)}
   .empty{padding:32px 24px;text-align:center;color:var(--mut);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface)}
   .grid>.empty{border:0;border-radius:0;grid-column:1/-1}
@@ -109,17 +109,11 @@
   .empty b{display:block;color:var(--ink);margin-bottom:4px}
   #sentinel{height:1px}
   .end{padding:16px 0 0;text-align:center;color:var(--mut);font-size:13px}
-  @media (min-width:600px){
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;background:none;border:0;border-radius:0;overflow:visible}
-    .card{flex-direction:column;align-items:stretch;gap:12px;padding:16px;min-height:150px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
-    .card:first-child{border-top:1px solid var(--line)}
-    .grid>.empty{border:1px solid var(--line);border-radius:var(--r-surface)}
-    .card:hover{border-color:var(--brand);box-shadow:0 2px 12px rgba(40,20,120,.08)}
-    .c-main{flex:1}
-    .name{font-size:21px}
-    .name.long{font-size:19px}
-    .acts{justify-content:space-between}
-    .acts .buy{flex:1;margin-left:8px}
+  @media (min-width:900px){
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{padding:18px 16px 18px 20px}
+    .card:nth-child(-n+2){border-top:0}
+    .card:nth-child(2n){border-left:1px solid var(--line)}
   }
 
   /* activity */
@@ -192,17 +186,18 @@
     .head h1{font-size:30px;margin-top:0}
     .head p{font-size:15px}
     .discover{display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px;align-items:start}
-    .filters{position:sticky;top:88px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);padding:4px 12px 16px;order:-1;max-height:calc(100vh - 108px);overflow:auto}
-    .filters .group{margin-top:20px}
-    .filters .group:first-of-type{margin-top:12px}
-    .group-l{padding:0 10px}
-    .filters .seg{display:flex;flex-direction:column;gap:2px}
-    .filters .seg button{height:36px;border:0;border-radius:var(--r-inner);justify-content:space-between;width:100%;background:none}
-    .filters .seg button:hover{background:var(--press)}
-    .filters .seg button[aria-pressed="true"]{background:var(--tint)}
-    .strip b{font-size:24px}
-    .strip div{padding:16px 20px}
-    .tools{margin-top:20px}
+    .filters{position:sticky;top:84px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);padding:6px 10px 12px;order:-1;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:none}
+    .filters::-webkit-scrollbar{display:none}
+    .filters .group{margin-top:10px}
+    .filters .group:first-of-type{margin-top:6px}
+    .group-l{padding:0 6px;margin:0 0 4px;font-size:11px}
+    .filters #fTopic{flex-direction:column;gap:0;flex-wrap:nowrap}
+    .filters #fTopic button{height:27px;width:100%;padding:0 8px;border:0;border-radius:6px;background:none;justify-content:space-between;font-size:13.5px}
+    .filters #fTopic button:hover{background:var(--press)}
+    .filters #fTopic button[aria-pressed="true"]{background:var(--tint)}
+    .filters .seg{gap:4px;padding:0 4px;flex-wrap:nowrap}
+    .filters .seg button{height:28px;padding:0 9px;font-size:13px;flex:1 1 auto;justify-content:center}
+    .tools{margin-top:16px}
     .totop{bottom:24px;right:24px}
     .toast{bottom:32px}
     .footer{margin-top:64px}
@@ -256,7 +251,7 @@
           <p>Brand-ready domains found by an AI miner, checked against the .com registry.</p>
         </header>
 
-        <div class="strip" id="strip"></div>
+        <p class="statline" id="strip"></p>
 
         <div class="tools">
           <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
@@ -371,14 +366,14 @@ function cardHTML(x) {
   const meta = [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
   return `<article class="card">
     <div class="c-main">
-      <button class="name${x.n.length > 13 ? " long" : ""}" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${nameHTML(x)}<span class="tld">.com</span></button>
+      <div class="c-top">
+        <button class="name${x.n.length > 15 ? " long" : ""}" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${nameHTML(x)}<span class="tld">.com</span></button>
+        <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
+      </div>
       ${mean ? `<p class="c-meaning">${esc(mean)}</p>` : ""}
       <p class="meta"><span class="ok">Available</span><span>${esc(meta)}</span></p>
     </div>
-    <div class="acts">
-      <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
-      <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg class="sm"><use href="#i-arrow"/></svg></a>
-    </div>
+    <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg><use href="#i-arrow"/></svg></a>
   </article>`;
 }
 const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search"/></svg><b>${title}</b>${text}</div>`;
@@ -450,8 +445,8 @@ function drawFilters() {
   const wordOpts = [[0, "Any words", n0(tot)], ...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, w + (w > 1 ? " words" : " word"), n0(c.w[w])])];
   const lenOpts = [[0, "Any length"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]];
   seg($("cTopic"), topicOpts, "topic", "chip"); seg($("cWords"), wordOpts, "words", "chip");
-  seg($("fTopic"), topicOpts, "topic", ""); seg($("fWords"), wordOpts, "words", ""); seg($("fLen"), lenOpts, "len", "", false);
-  seg($("fSort"), [["best", "Best"], ["short", "Shortest"], ["new", "Newest"], ["az", "A to Z"]], "sort", "", false);
+  seg($("fTopic"), topicOpts, "topic", ""); seg($("fWords"), [...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, String(w)])], "words", "", false); seg($("fLen"), [[6, "≤ 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len", "", false);
+  seg($("fSort"), [["best", "Best"], ["short", "Short"], ["new", "New"], ["az", "A-Z"]], "sort", "", false);
   $("openF").dataset.on = st.len || st.sort !== "best" ? "1" : "0";
 }
 const sheet = (open) => document.body.classList.toggle("sheet-open", open);
@@ -506,7 +501,7 @@ const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((
     });
     for (const x of st.all) { const w = wordsOf(x); st.counts.w[w] = (st.counts.w[w] || 0) + 1; for (const t of x._t) st.counts.t[t] = (st.counts.t[t] || 0) + 1; }
     st.scanned = scanned; st.upd = upd;
-    $("strip").innerHTML = `<div><b>${n0(scanned)}</b><span>Names scanned</span></div><div><b>${n0(st.all.length)}</b><span>Available</span></div><div><b>${ago(upd)}</b><span>Last update</span></div>`;
+    $("strip").innerHTML = `<b>${n0(scanned)}</b> names scanned &middot; <b>${n0(st.all.length)}</b> available &middot; updated ${ago(upd)}`;
     $("updTop").textContent = "Updated " + ago(upd);
     renderActivity({ free: st.all.length, scanned, runs, updated: upd, types, hist });
     render();
