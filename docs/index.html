@@ -356,7 +356,7 @@ const TOPICS = [
 const topicsOf = (x) => { const s = (x.n + " " + (x.m || "")).toLowerCase(); const r = TOPICS.filter((t) => t[2].split(" ").some((k) => s.includes(k))).map((t) => t[0]); return r.length ? r : ["other"]; };
 const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["other", "Other"]]);
 
-const st = { all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: true, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
+const st = { all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 
