@@ -79,6 +79,9 @@
 
   /* sections */
   .sec{margin-top:24px}
+  .sec-h.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .sec-h.row h2{margin:0}
+  .shuf{display:inline-flex;align-items:center;gap:6px}
   .sec-h h2{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px}
   .sec-sub{color:var(--mut);font-size:13px;margin:0 0 12px}
   .surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
@@ -243,6 +246,7 @@
   <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.2-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
@@ -283,13 +287,13 @@
         <div class="applied" id="applied" hidden></div>
 
         <section class="sec" id="topSec">
-          <div class="sec-h"><h2>Top picks</h2></div>
+          <div class="sec-h row"><h2>Top picks</h2><button class="linkbtn shuf" data-shuffle><svg class="sm"><use href="#i-shuffle"/></svg>Shuffle</button></div>
           <p class="sec-sub">Clean English-word names, best first.</p>
           <div class="grid" id="top"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
         </section>
 
         <section class="sec">
-          <div class="sec-h"><h2 id="allH">All names</h2></div>
+          <div class="sec-h row"><h2 id="allH">All names</h2><button class="linkbtn shuf" data-shuffle><svg class="sm"><use href="#i-shuffle"/></svg>Shuffle</button></div>
           <div class="grid" id="list"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
           <div id="sentinel"></div>
           <p class="end" id="end" hidden>You reached the end.</p>
@@ -370,7 +374,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
 const lenKey = (n) => (n <= 6 ? 6 : n <= 9 ? 9 : n <= 12 ? 12 : 13);
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
-const rank = (x) => (x.q > 0 ? 1000 + x.q : rank0(x));
+const rank = (x) => (x.q > 0 ? 1000 + Math.min(90, Math.floor(x.q / 10) * 10) : rank0(x)); // 90-100 = ek hi band (usme random order)
 const rank0 = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const bucket = (n) => (n <= 5 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
 const dayAgo = (t) => { if (!t) return ""; const d = Math.floor((Date.now() - new Date(t + "T00:00:00Z")) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
@@ -418,11 +422,28 @@ function computeFacets() {
 function filtered() {
   const ql = st.q.trim().toLowerCase();
   const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "words") && facetPass(x, "lens"));
-  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.length - b.n.length || a.n.localeCompare(b.n));
-  else if (st.sort === "short") r.sort((a, b) => a.n.length - b.n.length || rank(b) - rank(a));
-  else if (st.sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a));
+  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
+  else if (st.sort === "short") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || a.n.length - b.n.length || rank(b) - rank(a) || hOf(a) - hOf(b));
+  else if (st.sort === "new") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a) || hOf(a) - hOf(b));
   else r.sort((a, b) => a.n.localeCompare(b.n));
-  return r;
+  return st.sort === "az" ? r : diversify(r);
+}
+/* variety: equal-score names get a stable pseudo-random order (not A-Z), and the same first/last word never repeats inside a small window */
+const hashOf = (str) => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return h >>> 0; };
+let SEED = (Math.random() * 4294967296) >>> 0; // naya random order har visit par
+const hOf = (x) => (x._h ??= hashOf(SEED + ":" + x.n));
+const keysOf2 = (x) => { const p = partsOf(x); return p.length > 1 ? [p[0], p[p.length - 1]] : [x.n.slice(0, 4), x.n.slice(-3)]; };
+function diversify(arr, win = 12, look = 600) {
+  const n = arr.length, taken = new Uint8Array(n), out = [], recent = [], cnt = new Map(), K = arr.map(keysOf2);
+  let head = 0;
+  while (out.length < n) {
+    while (taken[head]) head++;
+    let pick = head, seen = 0;
+    for (let i = head; i < n && seen < look; i++) { if (taken[i]) continue; seen++; if (!K[i].some((w) => cnt.get(w))) { pick = i; break; } }
+    taken[pick] = 1; out.push(arr[pick]); recent.push(K[pick]); for (const w of K[pick]) cnt.set(w, (cnt.get(w) || 0) + 1);
+    if (recent.length > win) for (const w of recent.shift()) cnt.set(w, cnt.get(w) - 1);
+  }
+  return out;
 }
 const activeCount = () => st.topics.size + st.words.size + st.lens.size;
 const isFiltering = () => st.q.trim() || activeCount() || st.sort !== "best";
@@ -437,7 +458,13 @@ function appendMore() {
 function fill() { let g = 0; while (st.tab === "discover" && st.shown < st.cur.length && $("sentinel").getBoundingClientRect().top < innerHeight + 900 && g++ < 80) appendMore(); }
 
 function partsOf(x) { return (x.p || (x.m && x.m.includes("+") ? x.m.replace(/\s/g, "") : "")).split("+"); }
-function topPicks() { // only real, meaningful names: AI names with a meaning first, then clean word compounds; shortest first
+function topPicks() { // 12 names picked at random (new on every visit/shuffle) from the pool of best names, one per word
+  const pool = [...st.topPre].sort((a, b) => hOf(a) - hOf(b)), out = [], used = new Set();
+  for (const x of pool) { const ps = partsOf(x); if (ps.some((w) => used.has(w))) continue; ps.forEach((w) => used.add(w)); out.push(x); if (out.length >= 12) break; }
+  for (const x of pool) { if (out.length >= 12) break; if (!out.includes(x)) out.push(x); }
+  return out;
+}
+function topPicksLegacy() { // only real, meaningful names: AI names with a meaning first, then clean word compounds; shortest first
   const seenEnd = {}, tier = (x) => (x.m && !x.m.includes("+") ? 0 : 1);
   const ok = (x) => {
     if (/^(Generated|Phonetic|Manual:)/.test(x.cat || "") || (/^AI:/.test(x.cat || "") && !x.m)) return false;
@@ -455,8 +482,9 @@ function renderDiscover() {
   st.cur = filtered(); st.shown = 0; $("list").innerHTML = ""; $("end").hidden = true;
   computeFacets(); renderPanel(); renderApplied();
   const topSec = $("topSec"); topSec.hidden = !!isFiltering();
-  if (!topSec.hidden) { const t = st.topPre.length ? st.topPre : topPicks(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
+  if (!topSec.hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
   $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " \u00b7 loading full list" : "");
+  if (st.partial) { $("list").innerHTML = '<div class="card sk"><i></i><i></i></div>'.repeat(8); return; } // full list is still loading
   if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
   fill();
 }
@@ -526,6 +554,7 @@ document.addEventListener("click", (e) => {
     if (st.tab === "saved") renderSaved();
   }
   else if (t.dataset.tab) go(t.dataset.tab);
+  else if (t.hasAttribute("data-shuffle")) { SEED = (Math.random() * 4294967296) >>> 0; st.all.forEach((x) => { x._h = undefined; }); st.topPre.forEach((x) => { x._h = undefined; }); renderDiscover(); }
   else if (t.hasAttribute("data-clear")) { clearAll(); scrollTo(0, 0); renderDiscover(); }
   else if (t.dataset.rm) { const f = t.dataset.rm; if (f === "q") { st.q = ""; $("q").value = ""; } else toggle(st[f], f === "topics" ? t.dataset.v : +t.dataset.v); scrollTo(0, 0); renderDiscover(); }
   else if (t.dataset.quick) { toggle(st.topics, t.dataset.quick); scrollTo(0, 0); renderDiscover(); }
@@ -569,7 +598,7 @@ const idb = {
 const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 function applySummary(d) {
   st.scanned = d.scanned; st.upd = d.updated; st.free = d.free;
-  if (d.top && d.cats) st.topPre = d.top.map((t) => fromTuple(t, d.cats)); // top picks come from one place (the index builder)
+  const pl = d.topPool || d.top; if (pl && d.cats) st.topPre = pl.map((t) => fromTuple(t, d.cats)); // top picks come from one place (the index builder)
   $("strip").innerHTML = `<b>${n0(d.scanned)}</b> names scanned &middot; <b>${n0(d.free)}</b> available &middot; updated ${ago(d.updated)}`;
   $("updTop").textContent = "Updated " + ago(d.updated);
   renderActivity({ free: d.free, scanned: d.scanned, runs: d.runs, updated: d.updated, types: d.types, hist: d.hist });
@@ -605,7 +634,7 @@ async function legacyLoad() { // old way: many small files (used only if summary
   const sum = await sumP;
   if (!sum) { if (!cached) await legacyLoad(); return; }
   if (cached && cached.sum.v === sum.v) { applySummary(sum); return; }
-  if (!cached) { st.free = sum.free; st.all = sum.first.map((t) => fromTuple(t, sum.cats)); st.topPre = sum.top.map((t) => fromTuple(t, sum.cats)); applySummary(sum); render(); }
+  if (!cached) { st.free = sum.free; applySummary(sum); render(); }
   try {
     const all = await getJ("all.json");
     idb.set("all", { all, sum });

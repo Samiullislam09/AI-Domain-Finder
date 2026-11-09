@@ -92,7 +92,9 @@ function quality(x) {
   if (sense) q += 25;
   if (x.m && !x.m.includes("+")) q += 3;
   if (/ads|email/.test(x.n)) q -= 20;
-  return { q: Math.max(0, Math.min(100, q)), parts, sense };
+  q = Math.max(0, Math.min(100, q));
+  if (!sense) q = Math.round(q * 0.55); // asli words par matlab-hin jod (jaise "botdune") score aadha: achhe naamon ke neeche
+  return { q, parts, sense };
 }
 
 const partsOf = (x) => (x.p || (x.m && x.m.includes("+") ? x.m.replace(/\s/g, "") : "")).split("+");
@@ -132,11 +134,22 @@ for (const x of all) {
   ps.forEach((w) => { used[w] = (used[w] || 0) + 1; }); top.push(x); if (top.length >= 12) break;
 }
 
+// topPool: 120 achhe naam (q>=85, nahi to >=70); website har visit par inme se naye 12 chunti hai
+const pool = [], usedPool = {};
+for (const minQ of [85, 75, 65, 60]) {
+  for (const x of all) {
+    if (pool.length >= 120 || x.q < minQ) continue;
+    if (pool.includes(x)) continue;
+    const ps = x._parts || [];
+    if (ps.some((w) => (usedPool[w] || 0) >= 3)) continue;
+    ps.forEach((w) => { usedPool[w] = (usedPool[w] || 0) + 1; }); pool.push(x);
+  }
+}
 const items = all.map(tuple);
 const raw = JSON.stringify({ cats, items }); let h = 2166136261;
 for (let i = 0; i < raw.length; i += 5) h = Math.imul(h ^ raw.charCodeAt(i), 16777619) >>> 0;
 const v = (updated || "0") + "-" + h.toString(36); // cache key: badlega jab bhi data ya ranking badle
-const summary = { v, updated, scanned, runs, free: all.length, types, hist, cats, top: top.map(tuple), first: all.slice(0, 40).map(tuple) };
+const summary = { v, updated, scanned, runs, free: all.length, types, hist, cats, top: top.map(tuple), topPool: pool.map(tuple) };
 writeFileSync(path.join(DATA, "all.json"), JSON.stringify({ v, cats, items }));
 writeFileSync(path.join(DATA, "summary.json"), JSON.stringify(summary));
 console.log(`Clean naam (q>0): ${all.filter((x) => x.q > 0).length}, q>=60: ${all.filter((x) => x.q >= 60).length}`);
