@@ -46,7 +46,7 @@ const aiSeen = new Set(existsSync(F_CHECKED) ? readFileSync(F_CHECKED, "utf8").s
 const isV = (c) => "aeiou".includes(c);
 function mulberry(seed) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 // Meaningful descriptive compounds (TripTravelingGuide / Mailchimp jaise): simple, India mein samajh aane wale words.
-const TOPIC = "sales lead leads market marketing content social chat whatsapp mail email brand growth customer client business outreach ads post campaign video blog traffic funnel pipeline deal followup message inbox store shop order review support".split(" ");
+const TOPIC = "sales lead leads market marketing content social chat whatsapp mail brand growth customer client business outreach post campaign video blog traffic funnel pipeline deal followup message inbox store shop order review support".split(" ");
 const MOD = "auto smart quick easy instant daily simple fast bright clever super total happy ready pure true prime fresh".split(" ");
 const ROLE = "pilot buddy helper assistant agent manager engine booster maker studio desk hub coach mate bot worker team genie wizard factory machine guru expert planner writer sender scheduler tracker finder builder creator runner partner friend".split(" ");
 const PAIRS = (() => {

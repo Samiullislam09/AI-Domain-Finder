@@ -2,153 +2,326 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f5f8">
 <title>Domain Miner</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--ink:#141829;--mut:#6b7491;--line:#e3e6f0;--ac:#5b3df5;--ac-soft:#eeeaff;--ok:#12a150}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1020;--card:#171a2e;--ink:#eceefb;--mut:#9aa3c7;--line:#262a45;--ac:#8b78ff;--ac-soft:#242048;--ok:#3ccf82}}
-  :root[data-theme="dark"]{--bg:#0e1020;--card:#171a2e;--ink:#eceefb;--mut:#9aa3c7;--line:#262a45;--ac:#8b78ff;--ac-soft:#242048;--ok:#3ccf82}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
-  h1{font-size:24px;margin:0 0 4px}
-  .sub{color:var(--mut);margin:0 0 18px}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-  .stat b{display:block;font-size:22px}
-  .stat span{color:var(--mut);font-size:12.5px}
-  .bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-  input,select,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
-  input{flex:1;min-width:160px}
-  button{cursor:pointer}
-  button.on{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
-  .list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .row{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .row:last-child{border-bottom:0}
-  .no{color:var(--mut);font-size:12.5px}
-  .name{font-weight:650;font-size:16.5px;letter-spacing:.2px}
-  .name small{display:block;color:var(--mut);font-weight:400;font-size:12px;letter-spacing:0}
-  .act{display:flex;gap:6px}
-  .act a,.act button{font-size:13px;padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--card)}
-  .act a.buy{background:var(--ac);border-color:var(--ac);color:#fff}
-  .act .fav.on{color:#e0245e;border-color:#e0245e}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
-  .panel summary{cursor:pointer;font-weight:600}
-  .panel table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
-  .panel th,.panel td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
-  .panel th:first-child,.panel td:first-child{text-align:left}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .chip{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
-  .empty{padding:30px;text-align:center;color:var(--mut)}
-  .note{color:var(--mut);font-size:12.5px;margin-top:14px}
-  .more{display:block;margin:14px auto 0}
-  @media(max-width:560px){.row{grid-template-columns:34px 1fr}.act{grid-column:1/-1}}
+  :root{
+    --bg:#f4f5f8; --surface:#fff; --ink:#14161c; --mut:#626878; --line:#e4e6ee;
+    --accent:#14161c; --on-accent:#fff; --press:#eceef3;
+    --r-surface:16px; --r-inner:8px; --r-sheet:24px;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0f1115; --surface:#171a20; --ink:#edeff4; --mut:#9aa1b1; --line:#272b34;
+    --accent:#edeff4; --on-accent:#0f1115; --press:#20242c;
+  }}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--bg)}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  button,input{font:inherit;color:inherit}
+  button{background:none;border:0;padding:0;cursor:pointer}
+  svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  svg.sm{width:16px;height:16px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-inner)}
+
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 0}
+  .tab[hidden]{display:none}
+
+  /* header */
+  .head h1{font-size:22px;line-height:1.2;margin:8px 0 4px;letter-spacing:-.01em}
+  .head p{margin:0;color:var(--mut);font-size:14px}
+
+  /* search row */
+  .tools{display:flex;gap:8px;margin:16px 0 0}
+  .field{flex:1;display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--mut)}
+  .field input{flex:1;min-width:0;border:0;background:none;outline:0;font-size:16px;color:var(--ink)}
+  .field:focus-within{border-color:var(--ink)}
+  .iconbtn{width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;transition:background .15s var(--ease)}
+  .iconbtn:active{background:var(--press)}
+  .iconbtn[data-on="1"]{border-color:var(--ink)}
+
+  /* sections: one surface each, items split by 1px dividers */
+  .sec{margin-top:24px}
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 4px}
+  .sec-h h2{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0}
+  .sec-sub{color:var(--mut);font-size:13px;margin:0 0 12px}
+  .surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .info{flex:1;min-width:0}
+  .name{display:block;max-width:100%;text-align:left;font-size:18px;font-weight:650;letter-spacing:-.005em;overflow-wrap:anywhere;line-height:1.25;border-radius:var(--r-inner);transition:opacity .15s var(--ease)}
+  .name:active{opacity:.55}
+  .name span{color:var(--mut);font-weight:500}
+  .meta{margin:2px 0 0;color:var(--mut);font-size:13px}
+  .acts{display:flex;align-items:center;gap:4px}
+  .save{width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
+  .save:active{background:var(--press)}
+  .save[aria-pressed="true"]{color:var(--ink)}
+  .save[aria-pressed="true"] svg{fill:currentColor}
+  .buy{height:40px;padding:0 12px;display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:var(--on-accent);border-radius:var(--r-inner);font-weight:600;font-size:14px;text-decoration:none;transition:opacity .15s var(--ease)}
+  .buy:active{opacity:.8}
+  .more{display:block;width:100%;height:48px;margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-weight:600;transition:background .15s var(--ease)}
+  .more:active{background:var(--press)}
+  .empty{padding:32px 24px;text-align:center;color:var(--mut)}
+  .empty svg{width:24px;height:24px;margin-bottom:8px}
+  .empty b{display:block;color:var(--ink);margin-bottom:4px}
+
+  /* activity */
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+  .kv:first-child{border-top:0}
+  .kv dt{color:var(--mut)} .kv dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+  dl{margin:0}
+  .bar{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 16px;border-top:1px solid var(--line)}
+  .bar:first-child{border-top:0}
+  .bar span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+  .bar i{grid-column:1/-1;display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+  .bar i b{display:block;height:100%;background:var(--accent);border-radius:2px}
+  .foot{margin:24px 0 0;color:var(--mut);font-size:12.5px}
+
+  /* bottom navigation */
+  nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:5}
+  nav button{flex:1;max-width:200px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--mut);border-radius:12px;transition:color .15s var(--ease),background .15s var(--ease)}
+  nav button[aria-current="page"]{color:var(--ink);background:var(--press)}
+
+  /* filter sheet */
+  .scrim{position:fixed;inset:0;background:rgba(10,12,16,.45);opacity:0;pointer-events:none;transition:opacity .2s var(--ease);z-index:10}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s var(--ease);z-index:11;visibility:hidden}
+  body.sheet-open .scrim{opacity:1;pointer-events:auto}
+  body.sheet-open .sheet{transform:none;visibility:visible}
+  .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .sheet-h h2{font-size:17px;margin:0}
+  .group{margin-top:16px}
+  .group-l{font-size:13px;color:var(--mut);margin:0 0 8px}
+  .seg{display:flex;flex-wrap:wrap;gap:8px}
+  .seg button{height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface);font-weight:550;transition:background .15s var(--ease),border-color .15s var(--ease)}
+  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 0}
+  .switch span small{display:block;color:var(--mut);font-size:12.5px}
+  .switch button{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;transition:background .2s var(--ease)}
+  .switch button::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+  .switch button[aria-pressed="true"]{background:var(--accent)}
+  .switch button[aria-pressed="true"]::after{transform:translateX(18px);background:var(--on-accent)}
+  .apply{display:block;width:100%;height:48px;margin-top:20px;background:var(--accent);color:var(--on-accent);border-radius:12px;font-weight:600}
+
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--accent);color:var(--on-accent);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease);z-index:20}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Domain Miner</h1>
-  <p class="sub">AI roz naye khaali <b>.com</b> domains dhoondta hai. Naam bolne mein aasaan, brand jaise.</p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+</svg>
 
-  <div class="stats">
-    <div class="stat"><b id="sFree">-</b><span>Free domains mile</span></div>
-    <div class="stat"><b id="sScan">-</b><span>Naam scan hue</span></div>
-    <div class="stat"><b id="sRuns">-</b><span>Mining runs</span></div>
-    <div class="stat"><b id="sUpd">-</b><span>Aakhri update</span></div>
-  </div>
+<main class="wrap">
 
-  <details class="panel"><summary>Length-wise aur date-wise history</summary>
-    <div id="byLen"></div>
-    <table id="hist"></table>
-  </details>
+  <!-- DISCOVER -->
+  <section class="tab" id="t-discover">
+    <header class="head">
+      <h1>Domain Miner</h1>
+      <p id="sum">Loading available .com names...</p>
+    </header>
 
-  <div class="bar">
-    <input id="q" placeholder="Naam dhundo (jaise pilot, lumo)...">
-    <select id="cat"><option value="">Saari categories</option></select>
-    <select id="len"><option value="">Kitne letter</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select>
-    <select id="sort"><option value="best">Best pehle</option><option value="new">Naye pehle</option><option value="az">A-Z</option></select>
-    <button id="favOnly">♥ Shortlist</button>
-  </div>
+    <div class="tools">
+      <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
+      <button class="iconbtn" id="openF" aria-label="Filters"><svg><use href="#i-filter"/></svg></button>
+    </div>
 
-  <div class="list" id="list"></div>
-  <button class="more" id="more" hidden>Aur dikhao</button>
-  <p class="note">"Free" ka matlab scan ke waqt registry mein registered nahi tha. Khareedne se pehle registrar par dobara check karo aur trademark dekho.</p>
+    <section class="sec" id="topSec">
+      <div class="sec-h"><h2>Top picks</h2></div>
+      <p class="sec-sub" id="topSub">Strongest brand names found this week.</p>
+      <div class="surface" id="top"></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h2 id="allH">All names</h2></div>
+      <div class="surface" id="list"></div>
+      <button class="more" id="more" hidden>Show more</button>
+    </section>
+
+    <p class="foot">Available means not registered when it was scanned. Confirm with a registrar and check trademarks before you buy.</p>
+  </section>
+
+  <!-- SAVED -->
+  <section class="tab" id="t-saved" hidden>
+    <header class="head"><h1>Saved</h1><p id="savedSub">Names you bookmarked on this device.</p></header>
+    <section class="sec"><div class="surface" id="saved"></div></section>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section class="tab" id="t-activity" hidden>
+    <header class="head"><h1>Activity</h1><p>What the miner has checked so far.</p></header>
+    <section class="sec"><div class="sec-h"><h2>Totals</h2></div><div class="surface"><dl id="totals"></dl></div></section>
+    <section class="sec"><div class="sec-h"><h2>By type</h2></div><p class="sec-sub">Names checked, grouped by number of words and letters.</p><div class="surface" id="byType"></div></section>
+    <section class="sec"><div class="sec-h"><h2>By day</h2></div><p class="sec-sub">Names checked and found available, UTC.</p><div class="surface" id="byDay"></div></section>
+  </section>
+</main>
+
+<nav aria-label="Primary">
+  <button data-tab="discover" aria-current="page"><svg><use href="#i-compass"/></svg>Discover</button>
+  <button data-tab="saved"><svg><use href="#i-bookmark"/></svg>Saved</button>
+  <button data-tab="activity"><svg><use href="#i-activity"/></svg>Activity</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Filters" aria-modal="true">
+  <div class="sheet-h"><h2>Filters</h2><button class="iconbtn" id="closeF" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+  <div class="group"><p class="group-l">Words</p><div class="seg" id="fWords"></div></div>
+  <div class="group"><p class="group-l">Length</p><div class="seg" id="fLen"></div></div>
+  <div class="group"><p class="group-l">Sort by</p><div class="seg" id="fSort"></div></div>
+  <div class="switch"><span>Include old archive<small>Earlier syllable-style names, lower quality.</small></span><button id="fArch" aria-pressed="false" aria-label="Include old archive"></button></div>
+  <button class="apply" id="applyF">Show names</button>
 </div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
-let all = [], shown = 60, favs = new Set();
-try { favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
-let favOnly = false;
-const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...favs])); } catch {} };
+const BASE = new URLSearchParams(location.search).get("src") || "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/main/data/";
+const TAGS = ["", ...[4,5,6,7,8,9,10].map((l) => "-len" + l), "-len8-10","-len11-13","-len14-17",
+  "-w1-len3-5","-w1-len6-8","-w2-len5-7","-w2-len8-10","-w2-len11-14","-w3-len8-11","-w3-len12-14","-w3-len15-18"];
 
-function fmtAgo(iso) {
-  if (!iso) return "-";
-  const m = Math.round((Date.now() - new Date(iso)) / 60000);
-  if (m < 2) return "abhi"; if (m < 60) return m + " min pehle";
-  if (m < 1440) return Math.round(m / 60) + " ghante pehle"; return Math.round(m / 1440) + " din pehle";
+const st = { all: [], favs: new Set(), q: "", words: 0, len: 0, sort: "best", arch: false, shown: 30, tab: "discover" };
+try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
+const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const isArchive = (x) => /^(Manual:|Phonetic|Generated)/.test(x.cat || "");
+const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; if (x.m && x.m.includes("+")) return x.m.split("+").length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
+const rank = (x) => x.s - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
+const dayAgo = (t) => { if (!t) return ""; const d = Math.floor((Date.now() - new Date(t + "T00:00:00Z")) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
+const ago = (iso) => { if (!iso) return "never"; const m = Math.round((Date.now() - new Date(iso)) / 6e4); return m < 2 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; };
+const n0 = (v) => (v || 0).toLocaleString("en-US");
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), 1400); }
+
+function rowHTML(x) {
+  const meta = [x.m && x.m.includes("+") ? x.m : (x.m || ""), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
+  const saved = st.favs.has(x.n);
+  return `<div class="row">
+    <div class="info">
+      <button class="name" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${x.n}<span>.com</span></button>
+      <p class="meta">${esc(meta)}</p>
+    </div>
+    <div class="acts">
+      <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save"} ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
+      <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg class="sm"><use href="#i-arrow"/></svg></a>
+    </div>
+  </div>`;
 }
-function view() {
-  const q = $("q").value.trim().toLowerCase(), cat = $("cat").value, len = $("len").value, sort = $("sort").value;
-  let r = all.filter((x) => (!q || x.n.includes(q)) && (!cat || x.cat === cat) && (!len || x.n.length === +len) && (!favOnly || favs.has(x.n)));
-  if (sort === "best") r.sort((a, b) => b.s - a.s || a.n.localeCompare(b.n));
-  else if (sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || b.s - a.s);
+const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search"/></svg><b>${title}</b>${text}</div>`;
+
+function filtered() {
+  const q = st.q.trim().toLowerCase();
+  let r = st.all.filter((x) => (st.arch || !isArchive(x)) && (!q || x.n.includes(q) || (x.m || "").includes(q)) &&
+    (!st.words || wordsOf(x) === st.words) && (!st.len || (st.len === 6 ? x.n.length <= 6 : st.len === 9 ? x.n.length >= 7 && x.n.length <= 9 : st.len === 12 ? x.n.length >= 10 && x.n.length <= 12 : x.n.length >= 13)));
+  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.localeCompare(b.n));
+  else if (st.sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a));
   else r.sort((a, b) => a.n.localeCompare(b.n));
   return r;
 }
-function render() {
-  const r = view(), el = $("list");
-  if (!r.length) { el.innerHTML = '<div class="empty">Koi domain nahi mila.</div>'; $("more").hidden = true; return; }
-  el.innerHTML = r.slice(0, shown).map((x, i) => `
-    <div class="row">
-      <div class="no">${i + 1}</div>
-      <div class="name">${x.n}.com<small>${x.m ? x.m + " · " : ""}${x.cat}${x.t ? " · " + x.t : ""}</small></div>
-      <div class="act">
-        <button class="fav ${favs.has(x.n) ? "on" : ""}" data-n="${x.n}" title="Shortlist">♥</button>
-        <button data-copy="${x.n}.com">Copy</button>
-        <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Check / Buy</a>
-      </div>
-    </div>`).join("");
-  $("more").hidden = r.length <= shown;
-  $("more").textContent = `Aur dikhao (${r.length - shown} baaki)`;
-}
-document.addEventListener("click", (e) => {
-  const t = e.target;
-  if (t.dataset.n) { favs.has(t.dataset.n) ? favs.delete(t.dataset.n) : favs.add(t.dataset.n); saveFavs(); render(); }
-  if (t.dataset.copy) { navigator.clipboard?.writeText(t.dataset.copy); t.textContent = "Copied"; setTimeout(() => (t.textContent = "Copy"), 1200); }
-});
-["q", "cat", "len", "sort"].forEach((id) => $(id).addEventListener("input", () => { shown = 60; render(); }));
-$("favOnly").onclick = () => { favOnly = !favOnly; $("favOnly").classList.toggle("on", favOnly); shown = 60; render(); };
-$("more").onclick = () => { shown += 100; render(); };
+const isFiltering = () => st.q.trim() || st.words || st.len || st.arch || st.sort !== "best";
 
+function renderDiscover() {
+  const r = filtered(), topSec = $("topSec");
+  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  topSec.hidden = !!isFiltering();
+  if (!topSec.hidden) {
+    const pool = st.all.filter((x) => !isArchive(x));
+    let recent = pool.filter((x) => (x.t || "") >= weekAgo);
+    const useRecent = recent.length >= 5; if (!useRecent) recent = pool;
+    const top = recent.sort((a, b) => rank(b) - rank(a)).slice(0, 8);
+    $("topSub").textContent = useRecent ? "Strongest brand names found in the last 7 days." : "Strongest brand names found so far.";
+    $("top").innerHTML = top.length ? top.map(rowHTML).join("") : emptyHTML("Nothing yet", "The miner has not found names in this range.");
+  }
+  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(r.length) + ")";
+  $("list").innerHTML = r.length ? r.slice(0, st.shown).map(rowHTML).join("") : emptyHTML("No names match", "Try a shorter search or clear the filters.");
+  const left = r.length - st.shown; $("more").hidden = left <= 0; $("more").textContent = "Show more (" + n0(left) + " left)";
+}
+function renderSaved() {
+  const r = st.all.filter((x) => st.favs.has(x.n));
+  $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
+  $("saved").innerHTML = r.length ? r.sort((a, b) => rank(b) - rank(a)).map(rowHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark next to a name to keep it here.");
+}
+function render() { if (st.tab === "discover") renderDiscover(); else if (st.tab === "saved") renderSaved(); }
+
+/* tabs */
+function go(tab) {
+  st.tab = tab;
+  for (const t of ["discover", "saved", "activity"]) $("t-" + t).hidden = t !== tab;
+  document.querySelectorAll("nav button").forEach((b) => { if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  scrollTo(0, 0); render();
+}
+
+/* filter sheet */
+function seg(el, opts, key) {
+  el.innerHTML = opts.map(([v, l]) => `<button data-k="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${l}</button>`).join("");
+}
+function drawSheet() {
+  seg($("fWords"), [[0, "Any"], [1, "1 word"], [2, "2 words"], [3, "3 words"]], "words");
+  seg($("fLen"), [[0, "Any"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len");
+  seg($("fSort"), [["best", "Best"], ["new", "Newest"], ["az", "A to Z"]], "sort");
+  $("fArch").setAttribute("aria-pressed", st.arch);
+  $("openF").dataset.on = isFiltering() && (st.words || st.len || st.arch || st.sort !== "best") ? "1" : "0";
+}
+const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) drawSheet(); };
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button, a"); if (!t) return;
+  if (t.dataset.copy) { navigator.clipboard?.writeText(t.dataset.copy).then(() => toast("Copied " + t.dataset.copy), () => toast(t.dataset.copy)); }
+  else if (t.dataset.save) { const n = t.dataset.save; st.favs.has(n) ? st.favs.delete(n) : st.favs.add(n); saveFavs(); toast(st.favs.has(n) ? "Saved" : "Removed"); render(); }
+  else if (t.dataset.tab) go(t.dataset.tab);
+  else if (t.dataset.k) { st[t.dataset.k] = t.dataset.k === "sort" ? t.dataset.v : +t.dataset.v; st.shown = 30; drawSheet(); render(); }
+  else if (t.id === "fArch") { st.arch = !st.arch; st.shown = 30; drawSheet(); render(); }
+  else if (t.id === "openF") sheet(true);
+  else if (t.id === "closeF" || t.id === "applyF") sheet(false);
+  else if (t.id === "more") { st.shown += 40; render(); }
+});
+$("scrim").onclick = () => sheet(false);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
+$("q").addEventListener("input", (e) => { st.q = e.target.value; st.shown = 30; renderDiscover(); drawSheet(); });
+
+/* activity */
+function renderActivity(d) {
+  $("totals").innerHTML = [["Available names", n0(d.free)], ["Names checked", n0(d.scanned)], ["Mining runs", n0(d.runs)], ["Last update", ago(d.updated)]]
+    .map(([k, v]) => `<div class="kv"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+  const max = Math.max(1, ...Object.values(d.types).map((v) => v.s));
+  $("byType").innerHTML = Object.entries(d.types).sort((a, b) => b[1].s - a[1].s).map(([k, v]) =>
+    `<div class="bar"><span>${esc(k)}</span><span>${n0(v.f)} / ${n0(v.s)}</span><i><b style="width:${Math.round((v.s / max) * 100)}%"></b></i></div>`).join("") || emptyHTML("No data", "Runs will appear here.");
+  const days = Object.keys(d.hist).sort().reverse().slice(0, 30), mx = Math.max(1, ...days.map((k) => d.hist[k].s));
+  $("byDay").innerHTML = days.map((k) => `<div class="bar"><span>${k}</span><span>${n0(d.hist[k].f)} / ${n0(d.hist[k].s)}</span><i><b style="width:${Math.round((d.hist[k].s / mx) * 100)}%"></b></i></div>`).join("") || emptyHTML("No history yet", "The first full run will appear here.");
+}
+
+/* data */
+const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 (async () => {
   try {
-    // Data GitHub repo se seedha aata hai (miner push karta hai, Vercel redeploy nahi hota)
-    const RAW = "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/main/data/";
-    const get = (f) => fetch(RAW + f + "?t=" + Math.floor(Date.now() / 300000)).then((r) => { if (!r.ok) throw 0; return r.json(); });
-    const names = ["", ...[4, 5, 6, 7, 8, 9, 10].map((l) => "-len" + l), "-len8-10", "-len11-13", "-len14-17", "-w1-len3-5", "-w1-len6-8", "-w2-len5-7", "-w2-len8-10", "-w2-len11-14", "-w3-len8-11", "-w3-len12-14", "-w3-len15-18"];
-    const res = await Promise.all(names.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
-    const seen = new Set(), f = [], hist = {}, lens = {};
-    let scanned = 0, runs = 0, upd = "";
-    res.forEach(([fd, st], i) => {
-      for (const x of fd) if (!seen.has(x.n)) { seen.add(x.n); f.push(x); }
-      if (!st) return;
-      scanned += st.scanned || 0; runs += st.runs || 0; if ((st.updated || "") > upd) upd = st.updated;
-      const mm = (names[i] || "").match(/^-w(\d)-len(\d+)-(\d+)$/), k = mm ? `${mm[1]}-word, ${mm[2]}-${mm[3]}` : names[i] ? names[i].slice(4) : "purana mix";
-      lens[k] = { s: st.scanned || 0, f: fd.length };
-      for (const [d, v] of Object.entries(st.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
+    const res = await Promise.all(TAGS.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
+    const seen = new Set(), types = {}, hist = {}; let scanned = 0, runs = 0, upd = "";
+    res.forEach(([fd, s], i) => {
+      for (const x of fd) if (!seen.has(x.n)) { seen.add(x.n); st.all.push(x); }
+      if (!s) return;
+      scanned += s.scanned || 0; runs += s.runs || 0; if ((s.updated || "") > upd) upd = s.updated;
+      const mm = TAGS[i].match(/^-w(\d)-len(\d+)-(\d+)$/), k = mm ? `${mm[1]} word, ${mm[2]}-${mm[3]} letters` : TAGS[i] ? `Earlier run, ${TAGS[i].slice(4)} letters` : "Earlier archive";
+      types[k] = { s: s.scanned || 0, f: fd.length };
+      for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
     });
-    const s = { scanned, runs, updated: upd };
-    all = f;
-    $("sFree").textContent = f.length.toLocaleString(); $("sScan").textContent = scanned.toLocaleString();
-    $("sRuns").textContent = runs; $("sUpd").textContent = fmtAgo(upd);
-    $("byLen").innerHTML = '<div class="chips">' + Object.entries(lens).map(([k, v]) => `<div class="chip"><b>${k}</b> letter: ${v.s.toLocaleString()} scan, ${v.f.toLocaleString()} free</div>`).join("") + "</div>";
-    const days = Object.keys(hist).sort().reverse();
-    $("hist").innerHTML = "<tr><th>Date (UTC)</th><th>Scan hue</th><th>Free mile</th></tr>" + (days.map((d) => `<tr><td>${d}</td><td>${hist[d].s.toLocaleString()}</td><td>${hist[d].f.toLocaleString()}</td></tr>`).join("") || '<tr><td colspan="3">Abhi history shuru hui hai, miner chalne par yahan date-wise aayegi.</td></tr>');
-    const cats = [...new Set(f.map((x) => x.cat))].sort();
-    $("cat").innerHTML = '<option value="">Saari categories</option>' + cats.map((c) => `<option>${c}</option>`).join("");
+    const good = st.all.filter((x) => !isArchive(x)).length;
+    $("sum").textContent = n0(good) + " available .com names · updated " + ago(upd);
+    renderActivity({ free: st.all.length, scanned, runs, updated: upd, types, hist });
     render();
-  } catch (e) { $("list").innerHTML = '<div class="empty">Data load nahi hua. Page ko server se kholo (GitHub Pages ya local server).</div>'; }
+  } catch (e) {
+    $("sum").textContent = "Could not load data.";
+    $("list").innerHTML = emptyHTML("Data did not load", "Check your connection and reload the page."); $("topSec").hidden = true;
+  }
 })();
 </script>
 </body>
