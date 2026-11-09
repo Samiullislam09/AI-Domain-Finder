@@ -122,6 +122,10 @@ jobs:
           mkdir -p /tmp/idx && cp data/all.json data/summary.json /tmp/idx/
           cp state/verified.json state/taken.json /tmp/idx/ 2>/dev/null || true
           cd /tmp/idx
+          # Vercel is connected to this repo: a tiny docs/ folder + vercel.json stops it from trying (and failing) to build this data branch
+          mkdir -p docs
+          printf '{"git":{"deploymentEnabled":false}}' > docs/vercel.json
+          printf '<!doctype html><title>data</title>' > docs/index.html
           git init -q -b index
           git config user.name "domain-miner"
           git config user.email "domain-miner@users.noreply.github.com"

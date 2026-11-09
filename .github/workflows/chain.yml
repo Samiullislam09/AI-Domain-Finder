@@ -1,0 +1,35 @@
+name: Keep mining alive
+
+# Mining chain ko zinda rakhta hai: "Mine domains" khatam hote hi (success ya fail), agar koi run chal nahi rahi to agli run shuru kar deta hai.
+# Rokne ke liye: Actions mein chalti run ko Cancel karo (cancel hone par ye agli run shuru nahi karta) ya is workflow ko Disable karo.
+on:
+  workflow_run:
+    workflows: ["Mine domains"]
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  next:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    timeout-minutes: 15
+    steps:
+      - name: Wait first if the last run failed (taaki tez loop na bane)
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
+        run: sleep 300
+      - name: Start the next run if none is running
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sleep 25
+          active=$(gh run list --repo ${{ github.repository }} --workflow mine.yml --limit 20 --json status --jq '[.[] | select(.status != "completed")] | length')
+          echo "active runs: $active"
+          if [ "$active" -eq 0 ]; then
+            gh workflow run mine.yml --repo ${{ github.repository }} --ref main
+            echo "started the next run"
+          else
+            echo "a run is already active, nothing to do"
+          fi
