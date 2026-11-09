@@ -1,6 +1,6 @@
 // Re-verify: pehle se mile hue naamon ko dobara Verisign RDAP se check karta hai.
 // Jo naam ab registered (taken) nikle wo state/taken.json mein jate hain, aur build-index.mjs unko available list se hata deta hai.
-// Priority: achhe naam (q>=85) har ~30 min, q>=60 har ~2 ghante, baaki har ~24 ghante. Time-boxed (VERIFY_MINUTES, default 12).
+// Priority: sabse achhe naam (q>=120) har ~30 min, q>=60 har ~2 ghante, baaki har ~24 ghante. Time-boxed (VERIFY_MINUTES, default 12).
 // Input:  data/all.json (build-index.mjs ka output)   State: state/verified.json, state/taken.json
 // Run:    node verify.mjs
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -30,7 +30,7 @@ const now = Date.now();
 const due = [];
 for (const t of all.items) {
   const n = t[0]; if (taken[n]) continue;
-  const q = t[7] || 0, cls = q >= 85 ? 0 : q >= 60 ? 1 : 2, last = verified[n] || 0;
+  const q = t[7] || 0, cls = q >= 120 ? 0 : q >= 60 ? 1 : 2, last = verified[n] || 0;
   if (now - last >= AGE[cls]) due.push({ t, cls, last });
 }
 due.sort((a, b) => a.cls - b.cls || a.last - b.last);

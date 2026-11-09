@@ -314,7 +314,7 @@
 
         <section class="sec" id="topSec">
           <div class="sec-h row"><h2>Top picks</h2><button class="linkbtn shuf" data-shuffle><svg class="sm"><use href="#i-shuffle"/></svg>Shuffle</button></div>
-          <p class="sec-sub">Clean English-word names, best first.</p>
+          <p class="sec-sub">The shortest clean names, new mix on every visit.</p>
           <div class="grid" id="top"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
         </section>
 
@@ -405,10 +405,10 @@ const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...s
 st.gb = {}; st.takenTotal = 0; // names the server re-verify job found registered (same for everyone)
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
-const lenKey = (n) => (n <= 6 ? 6 : n <= 9 ? 9 : n <= 12 ? 12 : 13);
+const wordsOf = (x) => { if (/^Coined/.test(x.cat || "")) return 1; const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
+const lenKey = (n) => (n <= 3 ? 3 : n <= 10 ? n : n <= 12 ? 11 : 13); // exact lengths 3..10, then 11-12, 13+
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
-const rank = (x) => (x.q > 0 ? 1000 + Math.min(90, Math.floor(x.q / 10) * 10) : rank0(x)); // 90-100 = ek hi band (usme random order)
+const rank = (x) => (x.q >= 60 ? 2000 + Math.floor(x.q / 4) * 4 : x.q > 0 ? 1000 + x.q : rank0(x)); // score (chhota naam + achha pattern), 4 ke band, phir random
 const rank0 = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const bucket = (n) => (n <= 5 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
 const dayAgo = (t) => { if (!t) return ""; const d = Math.floor((Date.now() - new Date(t + "T00:00:00Z")) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
@@ -551,7 +551,7 @@ function go(tab) {
 /* filter panel (left rail on desktop, bottom sheet on mobile) */
 const LABEL = {
   words: { 1: "1 word", 2: "2 words", 3: "3 words" },
-  lens: { 6: "Up to 6 letters", 9: "7-9 letters", 12: "10-12 letters", 13: "13+ letters" },
+  lens: { 3: "3 letters", 4: "4 letters", 5: "5 letters", 6: "6 letters", 7: "7 letters", 8: "8 letters", 9: "9 letters", 10: "10 letters", 11: "11-12 letters", 13: "13+ letters" },
   sort: [["best", "Best match"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
 };
 function optHTML(f, v, label, count, type, checked) {
@@ -570,7 +570,7 @@ function renderPanel() {
     <div class="fp-body">
       ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], C(f.topics[id]), "checkbox", st.topics.has(id))).join(""))}
       ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
-      ${secHTML("lens", "Length", [6, 9, 12, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
+      ${secHTML("lens", "Length", [3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
       ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
     </div>
     <div class="fp-foot"><p class="fp-note"><b>${n0(st.partial ? st.free : st.cur.length)}</b> ${st.partial ? "names" : "of " + n0(st.all.length) + " names"}</p><button class="apply" id="applyF">${st.partial ? "Show names" : "Show " + n0(st.cur.length) + " names"}</button></div>`;

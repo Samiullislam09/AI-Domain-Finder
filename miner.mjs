@@ -8,13 +8,16 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { Resolver } from "node:dns/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildModel, coinedCandidates, friendly } from "./shortname.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DATA = path.join(here, "data");
 mkdirSync(DATA, { recursive: true });
 // LEN=4..10 -> sirf utne letter ki alag mining (alag files, taaki parallel jobs ke commit na takraayein). LEN nahi to purana mix mode.
 const [LMIN, LMAX] = (process.env.RANGE || "").split("-").map(Number).filter(Boolean).length === 2 ? process.env.RANGE.split("-").map(Number) : [+(process.env.LMIN || 0), +(process.env.LMAX || 0)], LEN = LMIN ? 1 : 0, W = +(process.env.WORDS || 0); // WORDS=1/2/3: naam kitne words ka // LMIN..LMAX = naam ki total letter range
-const TAG = W ? `-w${W}-len${LMIN}-${LMAX}` : LMIN ? `-len${LMIN}-${LMAX}` : "";
+const VOCAB = !!process.env.VOCAB; // VOCAB=1: sirf curated, vetted words (wordlist/brand-words.txt) se chhote, matlab-wale naam
+const COINED = +(process.env.COINED || 0); // COINED=3/4/5: chhote, bolne layak, English jaise naam (invented, Hulu/Canva jaise)
+const TAG = COINED ? `-c-len${LMIN}-${LMAX}` : W ? `-${VOCAB ? "v" : "w"}${W}-len${LMIN}-${LMAX}` : LMIN ? `-len${LMIN}-${LMAX}` : "";
 const F_FOUND = path.join(DATA, `found${TAG}.json`);
 const F_STATS = path.join(DATA, `stats${TAG}.json`);
 const F_CHECKED = path.join(DATA, `checked-ai${TAG}.txt`); // sirf AI ke diye naam
@@ -52,6 +55,23 @@ const ROLE = "pilot buddy helper assistant agent manager engine booster maker st
 const PAIRS = (() => {
   if (!LMIN) return [];
   const out = new Map(), fit = (n) => n.length >= LMIN && n.length <= LMAX && !/i$/.test(n);
+  if (COINED) { // trigram model: English jaise bolne wale chhote naam, sabse "English jaisa" pehle
+    const model = buildModel(path.join(here, "wordlist", "words.txt"));
+    const rnd = mulberry(20261110 + COINED * 131);
+    return coinedCandidates(model, COINED, rnd, COINED <= 4 ? 80000 : 150000).map((n) => [n, "coined"]);
+  }
+  if (VOCAB) { // curated words: adjective + noun, nature + nature/place, adjective + nature + noun (jaise boldfalcon, oakfield, bluesunhill)
+    const txt = readFileSync(path.join(here, "wordlist", "brand-words.txt"), "utf8");
+    const sect = (h) => { const i = txt.indexOf("# --- " + h); if (i < 0) return []; const j = txt.indexOf("# ---", i + 5); return txt.slice(i, j < 0 ? undefined : j).split(/\r?\n/).filter((l) => !l.startsWith("#")).join(" ").split(/\s+/).filter((w) => /^[a-z]{3,8}$/.test(w)); };
+    const ADJ = new Set(sect("quality")), NAT = new Set([...sect("nature"), ...sect("animals")]), PEO = new Set(sect("business and people")), PLA = new Set(sect("places and objects"));
+    const NOUN = [...new Set([...NAT, ...PEO, ...PLA])].filter((w) => !ADJ.has(w)), NATP = [...NAT, ...PLA];
+    const put = (parts) => { const n = parts.join(""); if (fit(n) && new Set(parts).size === parts.length && !out.has(n)) out.set(n, parts.join(" + ")); };
+    if (W === 2) { for (const a of ADJ) for (const b of NOUN) put([a, b]); for (const a of NAT) for (const b of NATP) put([a, b]); }
+    else if (W === 3 && LMAX <= 11) { for (const a of ADJ) for (const b of NAT) { if (a.length + b.length + 3 > LMAX) continue; for (const c of NOUN) put([a, b, c]); } }
+    const arr = [...out], rnd = mulberry(20261110 + LMIN * 31 + W * 97);
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    return arr;
+  }
   if (W === 1) { // 1 asli dictionary word (common pehle)
     const f = path.join(here, "wordlist", "words.txt");
     if (existsSync(f)) readFileSync(f, "utf8").split(/\r?\n/).filter(Boolean).forEach((n) => { if (fit(n)) out.set(n, "dictionary word"); });
@@ -108,7 +128,7 @@ async function aiBatch() {
   if (!KEY || Date.now() > deadline - 5 * 60000) return [];
   const [cat, desc] = THEMES[(stats.runs + round++) % THEMES.length];
   const avoid = [...aiSeen].slice(-150).join(", ") || "none";
-  const prompt = `Act as an expert brand naming strategist for global technology companies and startups.
+  let prompt = `Act as an expert brand naming strategist for global technology companies and startups.
 Product: ${PRODUCT}.
 Give 50 brand names for a modern technology company. Category: ${desc}.
 Inspiration: TripTravelingGuide, ChatGPT, Mailchimp, Dropbox, Salesforce, Facebook, Pinterest, Zapier.
@@ -120,6 +140,14 @@ Requirements:
 Strictly avoid: random letter strings (like Vomepo, Zokati, Vavodo), invented fantasy words, difficult spellings, foreign-sounding names, and generic use of Tech, Digital, AI, Solutions, Systems.
 Do NOT repeat: ${avoid}
 Reply with ONLY a JSON array of objects: [{"n":"name","p":"the words joined by + (example: wide+open+sky)","m":"short plain-English meaning"}]`;
+  if (LMAX && LMAX <= 6) { // chhote naam: AI se invented-but-natural brandable naam (Hulu, Canva, Groq jaise)
+    prompt = `You are a brand naming expert. Product: ${PRODUCT}.
+Give 60 SHORT brand-name candidates for a .com domain, each EXACTLY ${LMIN === LMAX ? LMIN : LMIN + " to " + LMAX} letters, lowercase a-z only.
+Style: invented or real-word names that sound natural in English and are easy to say for Indian English speakers, like Hulu, Uber, Nike, Zoom, Canva, Groq, Slack, Lyft, Zapier, Tumblr. Use soft vowels, at most 2 syllables, and a strong first sound.
+Strictly avoid: plain common dictionary words (they are all taken), random letter strings, hard consonant clusters, Russian, Slavic or Hindi-sounding names, and endings like -ov, -ova, -ski, -ino, -ora, -pe, -di, -ve, -i.
+Do NOT repeat: ${avoid}
+Reply with ONLY a JSON array of objects: [{"n":"name","m":"short note on the sound or idea"}]`;
+  }
   const list = await loadModels();
   const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...PREFER, ...list, ...ODD, process.env.NVIDIA_MODEL].filter(Boolean))].filter((m) => !(stats.bad || []).includes(m) && ((stats.slow || {})[m] || 0) < 2);
   let slowFails = 0;
@@ -155,7 +183,7 @@ Reply with ONLY a JSON array of objects: [{"n":"name","p":"the words joined by +
 function dictBatch(k = 60) {
   const out = [];
   if (!PAIRS.length) return out;
-  for (let i = 0; i < k; i++) { const [n, m] = PAIRS[stats.cursor++ % PAIRS.length]; out.push({ n, cat: W === 1 ? `1-word dictionary (${LMIN}-${LMAX} letter)` : `${W || "2-3"}-word compound (${LMIN}-${LMAX} letter)`, m }); }
+  for (let i = 0; i < k; i++) { const [n, m] = PAIRS[stats.cursor++ % PAIRS.length]; out.push({ n, cat: COINED ? `Coined ${COINED}-letter` : VOCAB ? `Curated ${W}-word (${LMIN}-${LMAX} letter)` : W === 1 ? `1-word dictionary (${LMIN}-${LMAX} letter)` : `${W || "2-3"}-word compound (${LMIN}-${LMAX} letter)`, m }); }
   return out;
 }
 
@@ -174,7 +202,7 @@ async function registry(n) {
   return "unknown";
 }
 function score(n, cat) {
-  let sc = cat.startsWith("AI") ? 92 : 72;
+  let sc = cat.startsWith("AI") ? 92 : cat.startsWith("Coined") ? 85 : cat.startsWith("Curated") ? 80 : 72;
   sc -= Math.abs(n.length - 11) * 1.5; if (/[xzqj]/.test(n)) sc -= 3; return Math.round(sc);
 }
 function save() {

@@ -3,6 +3,7 @@
 // Run:  node build-index.mjs   (GitHub Actions mein "index" job yehi chalati hai)
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { friendly } from "./shortname.mjs";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -43,6 +44,7 @@ const NATURE = new Set([...sect("nature"), ...sect("animals")]);       // oak, f
 const PEOPLE = new Set(sect("business and people"));                  // pilot, coach, guru ...
 const PLACES = new Set(sect("places and objects"));                   // harbor, garden, nest ...
 const NOUN_OK = new Set([...NATURE, ...PEOPLE, ...PLACES]);           // nouns that read like a real brand ("Bold Falcon", "Smart Pilot")
+const POS = new Set("bold brave bright brisk calm clear clean clever cool crisp eager epic fair fast fine firm fresh gentle glad grand great green happy honest ideal keen kind light lively lucky mighty noble open pure quick rapid ready rich royal safe sharp shiny simple sleek smart smooth solid steady strong sunny super sure sweet swift tidy true trusty vivid warm wise prime peak top best golden silver".split(" ")); // positive adjectives
 const STOP = new Set("the and for that this with you not are from your all have but was will can has our one other they what when which where who why how out its were been being them their then than there these those into over under about after before again also any only just very much more most some such each both few many own same too her him his she let get got did does done off yet nor per via had say said say may might must shall should would could jan feb mar apr jun jul aug sep sept oct nov dec mon tue wed thu fri sat".split(" "));
 const BAD = new Set((
   // sensitive / offensive / adult
@@ -76,24 +78,31 @@ function segment(n) { // best split into <=3 words: fewer parts first, then more
 function quality(x) {
   if (BAD_ANY.test(x.n)) return { q: 0 };
   const seg = segment(x.n);
-  if (!seg || !seg.parts.length) return { q: 0 };
+  if (!seg || !seg.parts.length) {
+    // chhote invented naam (Coined / AI, <=6 letter) jo bolne mein English jaise hon: shortest-first mein sabse upar
+    if (/^(Coined|AI:)/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 100 + (7 - x.n.length) * 10, parts: null, sense: true, coined: true };
+    return { q: 0 };
+  }
   const parts = seg.parts;
   if (parts.some((w) => STOP.has(w) || BAD.has(w)) || new Set(parts).size !== parts.length) return { q: 0 };
   // overlapping words like "leads"+"lead" look sloppy
   if (parts.some((a, i) => parts.some((b, k) => i !== k && (a.includes(b) || b.includes(a))))) return { q: 0 };
   let q = 40;
   q += seg.cur === parts.length ? 20 : seg.cur * 2 >= parts.length ? 6 : 0;
-  const L = x.n.length; q += L <= 5 ? 30 : L === 6 ? 24 : L === 7 ? 18 : L === 8 ? 12 : L === 9 ? 8 : L === 10 ? 5 : L <= 12 ? 2 : 0;
+  const L = x.n.length; q += L <= 6 ? 40 : L === 7 ? 34 : L === 8 ? 28 : L === 9 ? 22 : L === 10 ? 16 : L === 11 ? 10 : L === 12 ? 6 : L === 13 ? 3 : 0;
   q += parts.length === 1 ? 10 : parts.length === 2 ? 4 : 0;
   const last = parts[parts.length - 1];
   // "sense": natural phrase  (adjective + real noun)  |  1 real word  |  2-3 nature/place words (oak + field)
   const midOk = parts.length < 3 || parts.slice(1, -1).every((w) => ADJ.has(w) || NOUN_OK.has(w));
-  const sense = parts.length === 1 || (parts.length >= 2 && ADJ.has(parts[0]) && NOUN_OK.has(last) && !ADJ.has(last) && midOk) || parts.every((w) => NATURE.has(w) || PLACES.has(w));
-  if (sense) q += 25;
+  const adjLed = parts.length >= 2 && ADJ.has(parts[0]) && NOUN_OK.has(last) && !ADJ.has(last) && midOk;
+  const natPair = !adjLed && parts.length >= 2 && parts.every((w) => NATURE.has(w) || PLACES.has(w));
+  const sense = parts.length === 1 || adjLed || natPair;
+  if (parts.length === 1 || adjLed) q += 25; else if (natPair) q += 12; // "bold falcon" (+25 +18) > "wet dove" (+25 +8) > "owl elk" (+12)
+  if (adjLed) q += POS.has(parts[0]) ? 18 : 8;
   if (x.m && !x.m.includes("+")) q += 3;
   if (/ads|email/.test(x.n)) q -= 20;
-  q = Math.max(0, Math.min(100, q));
-  if (!sense) q = Math.round(q * 0.55); // asli words par matlab-hin jod (jaise "botdune") score aadha: achhe naamon ke neeche
+  q = Math.max(0, q); // cap nahi: chhote + achhe naam ke beech farak dikhe
+  if (!sense) q = Math.round(q * 0.4); // asli words par matlab-hin jod (jaise "botdune") score aadha: achhe naamon ke neeche
   return { q, parts, sense };
 }
 
@@ -114,8 +123,9 @@ for (const f of files.filter((f) => /^stats.*\.json$/.test(f)).sort()) {
   const tag = f.replace(/^stats/, "").replace(/\.json$/, "");
   const found = readJson(path.join(DATA, "found" + tag + ".json"), []).length;
   scanned += s.scanned || 0; runs += s.runs || 0; if ((s.updated || "") > updated) updated = s.updated;
-  const mm = tag.match(/^-w(\d)-len(\d+)-(\d+)$/);
-  const label = mm ? `${mm[1]} word, ${mm[2]}-${mm[3]} letters` : tag ? `Earlier run, ${tag.slice(4)} letters` : "Earlier archive";
+  const cm = tag.match(/^-c-len(\d+)-(\d+)$/);
+  const mm = tag.match(/^-([wv])(\d)-len(\d+)-(\d+)$/);
+  const label = cm ? `Short coined, ${cm[1]}-${cm[2]} letters` : mm ? `${mm[2]} word${mm[1] === "v" ? " (curated)" : ""}, ${mm[3]}-${mm[4]} letters` : tag ? `Earlier run, ${tag.slice(4)} letters` : "Earlier archive";
   types[label] = { s: s.scanned || 0, f: found };
   for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
 }
@@ -125,7 +135,8 @@ const cats = [], catIdx = new Map();
 const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0]; };
 for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; }
 // clean (q>0) naam pehle: score, phir chhota naam; baaki purane rank se
-all.sort((a, b) => (b.q > 0) - (a.q > 0) || (a.q > 0 ? b.q - a.q || a.n.length - b.n.length : rank(b) - rank(a)) || a.n.localeCompare(b.n));
+// sense wale (q>=60) pehle, unmein sabse zyada score (chhota naam + achha pattern) pehle; phir baaki clean; phir baaki
+all.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (a.q >= 60 ? b.q - a.q || a.n.length - b.n.length : (b.q > 0) - (a.q > 0) || b.q - a.q || rank(b) - rank(a)) || a.n.localeCompare(b.n));
 
 // top picks: sirf clean naam, sabse zyada score pehle; ek hi word 2 se zyada baar nahi
 const top = [], used = {};
@@ -139,12 +150,12 @@ for (const x of all) {
 
 // topPool: 120 achhe naam (q>=85, nahi to >=70); website har visit par inme se naye 12 chunti hai
 const pool = [], usedPool = {};
-for (const minQ of [85, 75, 65, 60]) {
+for (const minQ of [60]) {
   for (const x of all) {
-    if (pool.length >= 120 || x.q < minQ) continue;
+    if (pool.length >= 36 || x.q < minQ) continue;
     if (pool.includes(x)) continue;
-    const ps = x._parts || [];
-    if (ps.some((w) => (usedPool[w] || 0) >= 3)) continue;
+    const ps = x._parts || [x.n.slice(0, 3)];
+    if (ps.some((w) => (usedPool[w] || 0) >= 2)) continue;
     ps.forEach((w) => { usedPool[w] = (usedPool[w] || 0) + 1; }); pool.push(x);
   }
 }
