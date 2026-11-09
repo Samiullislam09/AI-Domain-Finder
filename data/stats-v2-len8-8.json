@@ -1,14 +1,14 @@
 {
- "scanned": 19873,
+ "scanned": 29350,
  "free": 2803,
- "runs": 2,
- "cursor": 21080,
- "aiOk": 14,
+ "runs": 3,
+ "cursor": 32640,
+ "aiOk": 51,
  "aiFail": 3,
- "updated": "2026-11-09T20:40:20.270Z",
+ "updated": "2026-11-09T21:21:26.061Z",
  "history": {
   "2026-11-09": {
-   "s": 19873,
+   "s": 29350,
    "f": 2803
   }
  },
@@ -37,15 +37,14 @@
   "nvidia/kumo-relational01"
  ],
  "slow": {
-  "meta/muse-glimmer-30b": 1,
+  "meta/muse-glimmer-30b": 2,
   "google/gemma-4-31b-it": 2,
   "deepseek-ai/deepseek-v4.1-flash": 2,
   "mistralai/mistral-large-4-1t-a52b": 2,
-  "google/diffusiongemma-26b-a4b-it": 1,
   "nvidia/ising-calibration-1.5-31b": 1,
   "meta/llama-3.2-90b-vision-instruct": 1,
   "nvidia/nemotron-3-ultra-550b-a55b": 1
  },
  "model": "google/diffusiongemma-26b-a4b-it",
- "goodModel": ""
+ "goodModel": "google/diffusiongemma-26b-a4b-it"
 }
