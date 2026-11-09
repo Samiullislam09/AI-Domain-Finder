@@ -55,3 +55,21 @@ jobs:
             sleep $((RANDOM % 10 + 3))
           done
           exit 1
+
+  # Cron GitHub par bharosemand nahi hota, isliye har run khatam hone par agli run khud shuru karta hai (24/7 chain).
+  # Roakne ke liye: Actions mein run ko Cancel karo ya workflow ko Disable karo.
+  rerun:
+    needs: mine
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Wait first if the run failed (taaki tez loop na bane)
+        if: ${{ needs.mine.result != 'success' }}
+        run: sleep 600
+      - name: Start the next run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run mine.yml --repo ${{ github.repository }} --ref main
