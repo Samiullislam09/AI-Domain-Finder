@@ -17,7 +17,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const dir = path.join(here, "results");
 mkdirSync(dir, { recursive: true });
 const F_CHECKED = path.join(dir, "scan-checked.txt");
-const F_FOUND = path.join(dir, "scan-FOUND.txt");
+const F_FOUND = path.join(dir, args.mode === "file" ? "scan-FOUND-final.txt" : args.mode === "real" ? "scan-FOUND-real.txt" : args.mode === "brand" ? "scan-FOUND-brand.txt" : "scan-FOUND.txt");
 const F_STATUS = path.join(dir, "scan-status.txt");
 
 // pehle se dekhe hue naam (resume)
@@ -67,8 +67,9 @@ function status(force) {
   const secs = Math.round((Date.now() - stats.started) / 1000);
   writeFileSync(F_STATUS, [
     `Phase: ${stats.phase}`, `Is run mein check hue: ${stats.checked}  (pehle se done: ${done.size - stats.checked})`,
-    `Taken: ${stats.taken}   Free: ${stats.free}   Unknown: ${stats.unknown}`,
-    `Mile hue (total ${found.length}/${WANT}): ${found.join(", ") || "-"}`, `Time: ${secs} sec`,
+    `Taken: ${stats.taken}   Free: ${stats.free}   Unknown: ${stats.unknown}   Time: ${secs} sec`,
+    "", `=== AVAILABLE .com DOMAINS: ${found.length}/${WANT} ===`,
+    ...found.map((d, i) => `${String(i + 1).padStart(3)}. ${d}`),
   ].join("\n") + "\n");
   process.stdout.write(`\r[${stats.phase}] checked ${stats.checked} | free ${found.length}/${WANT}   `);
 }
@@ -130,9 +131,56 @@ async function runCoined(minL, maxL, limit) {
   status(true);
 }
 
+// --- brand mode: AI / automation SaaS jaise naam (Groq, DeepSeek, AutoAgent style blends) ---
+const PRE = ["auto","flow","mind","nex","syn","cog","neur","zen","arc","vox","lum","data","bot","agi","pilot","logic","sync","loop","wave","spark","node","core","vect","prime","nova","apex","flux","hive","kern","deep","smart","swift","quick","rapid","brain","think","quant","omni","ultra","hyper","meta","pixel","signal","orbit","pulse","cloud","task","work","agent","chain","trace","scale","boost","lift","zap","jet","ion","iris","echo","atlas","helix","onyx","lyra","nimbus","vertex","cipher","delta","sigma","alpha","beta","gamma","omega"];
+const SUF = ["ly","io","ai","ify","flow","mind","bot","hub","base","grid","wise","pilot","forge","loop","ops","mate","sync","stack","deck","kit","lab","nest","works","able","ize","ora","ix","ex","ia","ar","or","en","on","us","um","eo","ino","wave","spark","node","core","brain","think","agent","task","path","gen","mesh","line","yard","dock","port","bit","byte"];
+function brandName(minL, maxL) {
+  for (let t = 0; t < 60; t++) {
+    const a = rnd(PRE), b = rnd(SUF), k = Math.random();
+    let n;
+    if (k < 0.45) n = a + b;                                              // autoflow, mindops
+    else if (k < 0.75) n = a.slice(0, 2 + Math.floor(Math.random() * 3)) + b; // clipped: nexora, cogify
+    else if (k < 0.9) n = rnd(PRE).slice(0, 3 + Math.floor(Math.random() * 2)) + rnd(PRE).slice(-3 - Math.floor(Math.random() * 2)); // blend: deepmind-style
+    else n = a + rnd(["a","o","i","e","y"]); // nova -> novae etc
+    if (/^[a-z]+$/.test(n) && n.length >= minL && n.length <= maxL && !/(.)\1\1/.test(n) && !/[^aeiou]{4}/.test(n) && /[aeiou]/.test(n)) return n;
+  }
+  return null;
+}
+async function runGen(label, gen, minL, maxL, limit) {
+  stats.phase = `${label} ${minL}-${maxL} letter`;
+  console.log(`\n${stats.phase}: max ${limit} naam check honge`);
+  let tried = 0, fails = 0;
+  const worker = async () => {
+    while (found.length < WANT && tried < limit && fails < 50000) {
+      const n = gen(minL, maxL);
+      if (!n || done.has(n)) { fails++; continue; }
+      done.add(n); tried++; await check(n); status();
+    }
+  };
+  await Promise.all(Array.from({ length: CONC }, worker));
+  status(true);
+}
+
 process.on("SIGINT", () => { status(true); console.log("\nRok diya. Dobara chalaoge to wahin se aage chalega."); process.exit(0); });
 
-if (args.mode === "coined") {
+if (args.mode === "file") {
+  // koi bhi candidates file: har line ka pehla hissa (comma se pehle) = naam, upar wale pehle check hote hain
+  const cf = path.resolve(args.file ?? "results/candidates-startup.txt");
+  if (!existsSync(cf)) { console.error(`File nahi mili: ${cf}`); process.exit(1); }
+  const list = [...new Set(readFileSync(cf, "utf8").split(/\r?\n/).flatMap((l) => (/\s/.test(l.trim()) ? l.trim().split(/\s+/) : [l.split(",")[0]])).map((n) => n.trim().toLowerCase()).filter((n) => /^[a-z]{3,12}$/.test(n)))];
+  console.log(`Shuru (file): ${WANT} domain chahiye, ${list.length} naam queue mein (best pehle).`);
+  await runPhase("startup names", list);
+} else if (args.mode === "real") {
+  const cf = path.join(dir, "candidates-100k.txt");
+  if (!existsSync(cf)) { console.error("Pehle chalao: node brand-gen.mjs"); process.exit(1); }
+  const list = readFileSync(cf, "utf8").split(/\r?\n/).map((l) => l.split(",")[0]).filter(Boolean);
+  console.log(`Shuru (real): ${WANT} domain chahiye, ${list.length} real-brand-jaise naam queue mein (best pehle).`);
+  await runPhase("real brand", list);
+} else if (args.mode === "brand") {
+  console.log(`Shuru (brand): ${WANT} domain chahiye, ${args.min ?? 5}-${args.max ?? 7} letter, AI/automation SaaS style.`);
+  // brand blends mein hit rate kam hota hai, isliye aadhe coined (saaf bolne layak) se mix karte hain
+  await runGen("brand", (a, b) => (Math.random() < +(args.blend ?? 0.7) ? brandName(a, b) : coinedName(a, b)), +(args.min ?? 5), +(args.max ?? 7), +(args.limit ?? 300000));
+} else if (args.mode === "coined") {
   console.log(`Shuru (coined): ${WANT} domain chahiye, ${args.min ?? 5}-${args.max ?? 6} letter.`);
   if (found.length < WANT) await runCoined(+(args.min ?? 5), +(args.max ?? 6), +(args.limit ?? 200000));
 } else {

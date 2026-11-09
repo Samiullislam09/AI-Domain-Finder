@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain Miner</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#141829;--mut:#6b7491;--line:#e3e6f0;--ac:#5b3df5;--ac-soft:#eeeaff;--ok:#12a150}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1020;--card:#171a2e;--ink:#eceefb;--mut:#9aa3c7;--line:#262a45;--ac:#8b78ff;--ac-soft:#242048;--ok:#3ccf82}}
+  :root[data-theme="dark"]{--bg:#0e1020;--card:#171a2e;--ink:#eceefb;--mut:#9aa3c7;--line:#262a45;--ac:#8b78ff;--ac-soft:#242048;--ok:#3ccf82}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .stat b{display:block;font-size:22px}
+  .stat span{color:var(--mut);font-size:12.5px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  input,select,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  input{flex:1;min-width:160px}
+  button{cursor:pointer}
+  button.on{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
+  .list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .row{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .no{color:var(--mut);font-size:12.5px}
+  .name{font-weight:650;font-size:16.5px;letter-spacing:.2px}
+  .name small{display:block;color:var(--mut);font-weight:400;font-size:12px;letter-spacing:0}
+  .act{display:flex;gap:6px}
+  .act a,.act button{font-size:13px;padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--card)}
+  .act a.buy{background:var(--ac);border-color:var(--ac);color:#fff}
+  .act .fav.on{color:#e0245e;border-color:#e0245e}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+  .panel summary{cursor:pointer;font-weight:600}
+  .panel table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  .panel th,.panel td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+  .panel th:first-child,.panel td:first-child{text-align:left}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
+  .empty{padding:30px;text-align:center;color:var(--mut)}
+  .note{color:var(--mut);font-size:12.5px;margin-top:14px}
+  .more{display:block;margin:14px auto 0}
+  @media(max-width:560px){.row{grid-template-columns:34px 1fr}.act{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Domain Miner</h1>
+  <p class="sub">AI roz naye khaali <b>.com</b> domains dhoondta hai. Naam bolne mein aasaan, brand jaise.</p>
+
+  <div class="stats">
+    <div class="stat"><b id="sFree">-</b><span>Free domains mile</span></div>
+    <div class="stat"><b id="sScan">-</b><span>Naam scan hue</span></div>
+    <div class="stat"><b id="sRuns">-</b><span>Mining runs</span></div>
+    <div class="stat"><b id="sUpd">-</b><span>Aakhri update</span></div>
+  </div>
+
+  <details class="panel"><summary>Length-wise aur date-wise history</summary>
+    <div id="byLen"></div>
+    <table id="hist"></table>
+  </details>
+
+  <div class="bar">
+    <input id="q" placeholder="Naam dhundo (jaise pilot, lumo)...">
+    <select id="cat"><option value="">Saari categories</option></select>
+    <select id="len"><option value="">Kitne letter</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select>
+    <select id="sort"><option value="best">Best pehle</option><option value="new">Naye pehle</option><option value="az">A-Z</option></select>
+    <button id="favOnly">♥ Shortlist</button>
+  </div>
+
+  <div class="list" id="list"></div>
+  <button class="more" id="more" hidden>Aur dikhao</button>
+  <p class="note">"Free" ka matlab scan ke waqt registry mein registered nahi tha. Khareedne se pehle registrar par dobara check karo aur trademark dekho.</p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let all = [], shown = 60, favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
+let favOnly = false;
+const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...favs])); } catch {} };
+
+function fmtAgo(iso) {
+  if (!iso) return "-";
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 2) return "abhi"; if (m < 60) return m + " min pehle";
+  if (m < 1440) return Math.round(m / 60) + " ghante pehle"; return Math.round(m / 1440) + " din pehle";
+}
+function view() {
+  const q = $("q").value.trim().toLowerCase(), cat = $("cat").value, len = $("len").value, sort = $("sort").value;
+  let r = all.filter((x) => (!q || x.n.includes(q)) && (!cat || x.cat === cat) && (!len || x.n.length === +len) && (!favOnly || favs.has(x.n)));
+  if (sort === "best") r.sort((a, b) => b.s - a.s || a.n.localeCompare(b.n));
+  else if (sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || b.s - a.s);
+  else r.sort((a, b) => a.n.localeCompare(b.n));
+  return r;
+}
+function render() {
+  const r = view(), el = $("list");
+  if (!r.length) { el.innerHTML = '<div class="empty">Koi domain nahi mila.</div>'; $("more").hidden = true; return; }
+  el.innerHTML = r.slice(0, shown).map((x, i) => `
+    <div class="row">
+      <div class="no">${i + 1}</div>
+      <div class="name">${x.n}.com<small>${x.cat}${x.t ? " · " + x.t : ""}</small></div>
+      <div class="act">
+        <button class="fav ${favs.has(x.n) ? "on" : ""}" data-n="${x.n}" title="Shortlist">♥</button>
+        <button data-copy="${x.n}.com">Copy</button>
+        <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Check / Buy</a>
+      </div>
+    </div>`).join("");
+  $("more").hidden = r.length <= shown;
+  $("more").textContent = `Aur dikhao (${r.length - shown} baaki)`;
+}
+document.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t.dataset.n) { favs.has(t.dataset.n) ? favs.delete(t.dataset.n) : favs.add(t.dataset.n); saveFavs(); render(); }
+  if (t.dataset.copy) { navigator.clipboard?.writeText(t.dataset.copy); t.textContent = "Copied"; setTimeout(() => (t.textContent = "Copy"), 1200); }
+});
+["q", "cat", "len", "sort"].forEach((id) => $(id).addEventListener("input", () => { shown = 60; render(); }));
+$("favOnly").onclick = () => { favOnly = !favOnly; $("favOnly").classList.toggle("on", favOnly); shown = 60; render(); };
+$("more").onclick = () => { shown += 100; render(); };
+
+(async () => {
+  try {
+    // Data GitHub repo se seedha aata hai (miner push karta hai, Vercel redeploy nahi hota)
+    const RAW = "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/main/data/";
+    const get = (f) => fetch(RAW + f + "?t=" + Math.floor(Date.now() / 300000)).then((r) => { if (!r.ok) throw 0; return r.json(); });
+    const names = ["", ...[4, 5, 6, 7, 8, 9, 10].map((l) => "-len" + l)];
+    const res = await Promise.all(names.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
+    const seen = new Set(), f = [], hist = {}, lens = {};
+    let scanned = 0, runs = 0, upd = "";
+    res.forEach(([fd, st], i) => {
+      for (const x of fd) if (!seen.has(x.n)) { seen.add(x.n); f.push(x); }
+      if (!st) return;
+      scanned += st.scanned || 0; runs += st.runs || 0; if ((st.updated || "") > upd) upd = st.updated;
+      const k = names[i] ? names[i].slice(4) : "purana mix";
+      lens[k] = { s: st.scanned || 0, f: fd.length };
+      for (const [d, v] of Object.entries(st.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
+    });
+    const s = { scanned, runs, updated: upd };
+    all = f;
+    $("sFree").textContent = f.length.toLocaleString(); $("sScan").textContent = scanned.toLocaleString();
+    $("sRuns").textContent = runs; $("sUpd").textContent = fmtAgo(upd);
+    $("byLen").innerHTML = '<div class="chips">' + Object.entries(lens).map(([k, v]) => `<div class="chip"><b>${k}</b> letter: ${v.s.toLocaleString()} scan, ${v.f.toLocaleString()} free</div>`).join("") + "</div>";
+    const days = Object.keys(hist).sort().reverse();
+    $("hist").innerHTML = "<tr><th>Date (UTC)</th><th>Scan hue</th><th>Free mile</th></tr>" + (days.map((d) => `<tr><td>${d}</td><td>${hist[d].s.toLocaleString()}</td><td>${hist[d].f.toLocaleString()}</td></tr>`).join("") || '<tr><td colspan="3">Abhi history shuru hui hai, miner chalne par yahan date-wise aayegi.</td></tr>');
+    const cats = [...new Set(f.map((x) => x.cat))].sort();
+    $("cat").innerHTML = '<option value="">Saari categories</option>' + cats.map((c) => `<option>${c}</option>`).join("");
+    render();
+  } catch (e) { $("list").innerHTML = '<div class="empty">Data load nahi hua. Page ko server se kholo (GitHub Pages ya local server).</div>'; }
+})();
+</script>
+</body>
+</html>

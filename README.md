@@ -102,6 +102,20 @@ Output `results/` mein:
 - "Free" ka matlab hai abhi registry mein registered nahi dikha. Khareedne se pehle registrar (Namecheap, GoDaddy) par confirm karo aur trademark check karo.
 - Bahut zyada parallel checks (`--conc`) se memory ya timeouts badh sakte hain.
 
+## 3) Website + 24/7 mining (bilkul free)
+
+- **Mining (backend) = GitHub Actions.** `.github/workflows/mine.yml` har 30 min `miner.mjs` chalata hai. NVIDIA AI yahin connect hota hai (GitHub Secret `NVIDIA_API_KEY`). Free domains `data/found.json` mein commit ho jate hain.
+- **Website = Vercel.** `docs/index.html` static page hai. Yeh data seedha GitHub se (`raw.githubusercontent.com/.../data/found.json`) padhta hai, isliye miner ke har push par Vercel ko redeploy nahi karna padta.
+
+Setup (ek baar):
+1. GitHub repo: Settings -> Secrets and variables -> Actions -> secret `NVIDIA_API_KEY` (aapki key). Optional variable `NVIDIA_MODEL`.
+2. Actions tab -> "Mine domains" -> Run workflow (pehli baar haath se).
+3. Vercel: Add New Project -> repo import -> Framework `Other`, Root Directory `docs`, Build Command khali. Settings -> Git -> **Ignored Build Step** mein: `git diff --quiet HEAD^ HEAD -- .` (sirf docs/ badle tab deploy).
+
+Local: `node miner.mjs` (mining), `npx serve docs` (website).
+
+Dhyan: repo public rakho (private mein Actions ke sirf 2000 min/mahina). Public mein free domains sabko dikhte hain.
+
 ## GitHub par push karne se pehle
 
 - `.env` push mat karo, `_env.example` mein sirf placeholder rakho.
