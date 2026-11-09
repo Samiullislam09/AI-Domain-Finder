@@ -13,8 +13,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const DATA = path.join(here, "data");
 mkdirSync(DATA, { recursive: true });
 // LEN=4..10 -> sirf utne letter ki alag mining (alag files, taaki parallel jobs ke commit na takraayein). LEN nahi to purana mix mode.
-const [LMIN, LMAX] = (process.env.RANGE || "").split("-").map(Number).filter(Boolean).length === 2 ? process.env.RANGE.split("-").map(Number) : [+(process.env.LMIN || 0), +(process.env.LMAX || 0)], LEN = LMIN ? 1 : 0; // LMIN..LMAX = naam ki total letter range
-const TAG = LMIN ? `-len${LMIN}-${LMAX}` : "";
+const [LMIN, LMAX] = (process.env.RANGE || "").split("-").map(Number).filter(Boolean).length === 2 ? process.env.RANGE.split("-").map(Number) : [+(process.env.LMIN || 0), +(process.env.LMAX || 0)], LEN = LMIN ? 1 : 0, W = +(process.env.WORDS || 0); // WORDS=1/2/3: naam kitne words ka // LMIN..LMAX = naam ki total letter range
+const TAG = W ? `-w${W}-len${LMIN}-${LMAX}` : LMIN ? `-len${LMIN}-${LMAX}` : "";
 const F_FOUND = path.join(DATA, `found${TAG}.json`);
 const F_STATS = path.join(DATA, `stats${TAG}.json`);
 const F_CHECKED = path.join(DATA, `checked-ai${TAG}.txt`); // sirf AI ke diye naam
@@ -36,7 +36,7 @@ const readJson = (f, d) => { try { return JSON.parse(readFileSync(f, "utf8")); }
 
 const found = readJson(F_FOUND, []);
 const stats = Object.assign({ scanned: 0, free: found.length, runs: 0, cursor: 0, aiOk: 0, aiFail: 0, updated: "", history: {} }, readJson(F_STATS, {}));
-stats.len = LMIN ? `${LMIN}-${LMAX}` : "mix";
+stats.len = LMIN ? `${LMIN}-${LMAX}` : "mix"; stats.words = W || "any";
 stats.runs++;
 const bump = (k) => { const d = new Date().toISOString().slice(0, 10); (stats.history[d] ||= { s: 0, f: 0 })[k]++; }; // date-wise history
 const have = new Set(found.map((x) => x.n));
@@ -51,14 +51,19 @@ const MOD = "auto smart quick easy instant daily simple fast bright clever super
 const ROLE = "pilot buddy helper assistant agent manager engine booster maker studio desk hub coach mate bot worker team genie wizard factory machine guru expert planner writer sender scheduler tracker finder builder creator runner partner friend".split(" ");
 const PAIRS = (() => {
   if (!LMIN) return [];
-  const out = new Map(), add = (parts) => { const n = parts.join(""); if (n.length >= LMIN && n.length <= LMAX && !/i$/.test(n) && new Set(parts).size === parts.length && !out.has(n)) out.set(n, parts.join(" + ")); };
-  for (const c of ROLE) {
-    for (const a of TOPIC) add([a, c]);
-    for (const b of MOD) { add([b, c]); for (const a of TOPIC) add([b, a, c]); }
-    for (const a of TOPIC) for (const a2 of TOPIC) add([a, a2, c]);
+  const out = new Map(), fit = (n) => n.length >= LMIN && n.length <= LMAX && !/i$/.test(n);
+  if (W === 1) { // 1 asli dictionary word (common pehle)
+    const f = path.join(here, "wordlist", "words.txt");
+    if (existsSync(f)) readFileSync(f, "utf8").split(/\r?\n/).filter(Boolean).forEach((n) => { if (fit(n)) out.set(n, "dictionary word"); });
+    return [...out];
   }
-  for (const b of MOD) for (const a of TOPIC) add([b, a]);
-  const arr = [...out], rnd = mulberry(20261109 + LMIN);
+  const add = (parts) => { const n = parts.join(""); if ((!W || parts.length === W) && fit(n) && new Set(parts).size === parts.length && !out.has(n)) out.set(n, parts.join(" + ")); };
+  for (const c of ROLE) {
+    if (W !== 3) { for (const a of TOPIC) add([a, c]); for (const b of MOD) add([b, c]); }
+    if (W !== 2) { for (const b of MOD) for (const a of TOPIC) add([b, a, c]); for (const a of TOPIC) for (const a2 of TOPIC) add([a, a2, c]); }
+  }
+  if (W !== 3) { for (const b of MOD) for (const a of TOPIC) add([b, a]); for (const a of TOPIC) for (const a2 of TOPIC) add([a, a2]); }
+  const arr = [...out], rnd = mulberry(20261109 + LMIN + W * 97);
   for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
   return arr;
 })();
@@ -109,7 +114,7 @@ Give 50 brand names for a modern technology company. Category: ${desc}.
 Inspiration: TripTravelingGuide, ChatGPT, Mailchimp, Dropbox, Salesforce, Facebook, Pinterest, Zapier.
 Requirements:
 - Lowercase a-z, total ${LMIN ? LMIN + " to " + LMAX : "8 to 16"} letters.
-- Made of TWO or THREE simple, real English words joined (like TripTravelingGuide, Mailchimp, Dropbox, ChatGPT, Salesforce). Every part must be a common English word that Indian users already know.
+- Made of ${W ? "EXACTLY " + W + " real English word" + (W > 1 ? "s joined" : "") : "TWO or THREE simple, real English words joined"} (like TripTravelingGuide, Mailchimp, Dropbox, ChatGPT, Salesforce). Every part must be a common English word that Indian users already know.
 - Must NOT end in -i, -pe, -di, -ve or any made-up syllable; end on a real word.
 - Easy to say and spell for Indian English speakers; people should instantly understand it. Bold, modern, memorable, professional.
 Strictly avoid: random letter strings (like Vomepo, Zokati, Vavodo), invented fantasy words, difficult spellings, foreign-sounding names, and generic use of Tech, Digital, AI, Solutions, Systems.
@@ -150,7 +155,7 @@ Reply with ONLY a JSON array of objects: [{"n":"name","m":"the two words / meani
 function dictBatch(k = 60) {
   const out = [];
   if (!PAIRS.length) return out;
-  for (let i = 0; i < k; i++) { const [n, m] = PAIRS[stats.cursor++ % PAIRS.length]; out.push({ n, cat: `Brand compound (${LMIN}-${LMAX} letter)`, m }); }
+  for (let i = 0; i < k; i++) { const [n, m] = PAIRS[stats.cursor++ % PAIRS.length]; out.push({ n, cat: W === 1 ? `1-word dictionary (${LMIN}-${LMAX} letter)` : `${W || "2-3"}-word compound (${LMIN}-${LMAX} letter)`, m }); }
   return out;
 }
 

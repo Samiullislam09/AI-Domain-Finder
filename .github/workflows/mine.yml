@@ -15,20 +15,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        range: ["8-10", "11-13", "14-17"]   # naam ki total letter range (alag mining, parallel)
+        include:     # har job = kitne words + kitne letter (alag mining, parallel)
+          - { words: 1, range: "3-5" }
+          - { words: 1, range: "6-8" }
+          - { words: 2, range: "5-7" }
+          - { words: 2, range: "8-10" }
+          - { words: 2, range: "11-14" }
+          - { words: 3, range: "8-11" }
+          - { words: 3, range: "12-14" }
+          - { words: 3, range: "15-18" }
     concurrency:
-      group: mine-${{ matrix.range }}
+      group: mine-${{ matrix.words }}-${{ matrix.range }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Mine ${{ matrix.range }} letter
+      - name: Mine ${{ matrix.words }}-word ${{ matrix.range }} letter
         timeout-minutes: 25
         continue-on-error: true
         run: node miner.mjs
         env:
+          WORDS: ${{ matrix.words }}
           RANGE: ${{ matrix.range }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL }}
@@ -40,7 +49,7 @@ jobs:
           git config user.email "domain-miner@users.noreply.github.com"
           git add data
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "Mine ${{ matrix.range }} letter: new free domains"
+          git commit -m "Mine ${{ matrix.words }}-word ${{ matrix.range }} letter: new free domains"
           for i in 1 2 3 4 5 6; do
             git pull --rebase && git push && exit 0
             sleep $((RANDOM % 10 + 3))
