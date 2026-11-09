@@ -284,7 +284,7 @@
 
         <section class="sec" id="topSec">
           <div class="sec-h"><h2>Top picks</h2></div>
-          <p class="sec-sub">Real-word names with a clear meaning, shortest first.</p>
+          <p class="sec-sub">Clean English-word names, best first.</p>
           <div class="grid" id="top"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
         </section>
 
@@ -370,7 +370,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
 const lenKey = (n) => (n <= 6 ? 6 : n <= 9 ? 9 : n <= 12 ? 12 : 13);
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
-const rank = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
+const rank = (x) => (x.q > 0 ? 1000 + x.q : rank0(x));
+const rank0 = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const bucket = (n) => (n <= 5 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
 const dayAgo = (t) => { if (!t) return ""; const d = Math.floor((Date.now() - new Date(t + "T00:00:00Z")) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
 const ago = (iso) => { if (!iso) return "never"; const m = Math.round((Date.now() - new Date(iso)) / 6e4); return m < 2 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; };
@@ -417,7 +418,7 @@ function computeFacets() {
 function filtered() {
   const ql = st.q.trim().toLowerCase();
   const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "words") && facetPass(x, "lens"));
-  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.localeCompare(b.n));
+  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.length - b.n.length || a.n.localeCompare(b.n));
   else if (st.sort === "short") r.sort((a, b) => a.n.length - b.n.length || rank(b) - rank(a));
   else if (st.sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a));
   else r.sort((a, b) => a.n.localeCompare(b.n));
@@ -559,7 +560,7 @@ function renderActivity(d) {
 
 /* data: fast path = summary.json (5 KB) + all.json (compact, cached in IndexedDB); fallback = old per-file loading */
 const TOPIC_IDS = [...TOPICS.map((t) => t[0]), "other"];
-const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
+const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], q: t[7] || 0, _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
 const idb = {
   open: () => new Promise((res, rej) => { try { const q = indexedDB.open("dm", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(); q.onblocked = () => rej(); } catch (e) { rej(e); } }),
   async get(k) { try { const db = await this.open(); return await new Promise((res) => { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }); } catch { return null; } },

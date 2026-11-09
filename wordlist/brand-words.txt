@@ -1,0 +1,39 @@
+# Curated, professional, easy English words (3-8 letters) that read well inside a brand name.
+# Used by build-index.mjs: a name is "clean" only if it splits fully into words from this list (or from the strict common-word fallback).
+# One or more words per line, space separated. Lines starting with # are comments.
+
+# --- quality / feel
+bold brave bright brisk calm clear clean clever cool crisp deep eager easy epic even fair fast fine firm fit flat fresh full gentle glad grand great green happy hardy high honest humble ideal jolly keen kind light lively lucky mighty modern neat new nice noble open pure quick quiet rapid ready real rich royal safe sharp shiny simple sleek slim smart smooth solid sound steady strong sunny super sure sweet swift tidy tough true trusty vivid warm wise young zesty prime peak top best max ultra mega micro mini nano meta omni uni neo core main key first next early daily total happy
+plain social direct instant active agile alert amber ample avid balanced basic big blue red gold silver black white pink teal navy lime ivory scarlet crimson violet indigo
+old small little long short wide tall cold hot soft hard dark golden wild giant tiny vast rare lush dry wet raw young early late sleek classic rustic gleaming shining sparkling glowing living rising flowing growing
+
+# --- nature, sky, water, land
+sky sun moon star cloud rain snow wind storm fire flame ember blaze spark flash bolt wave tide ocean sea river lake stream brook pond forest wood leaf bloom seed root tree oak pine cedar maple birch willow rose lily iris daisy sage mint basil honey coral pearl jade ruby onyx iron steel stone rock sand dune cliff hill summit valley meadow field grass garden island coast shore harbor bay reef cave canyon desert jungle arctic polar solar lunar cosmic comet orbit planet galaxy cosmos nova atlas dawn dusk sunset sunrise morning twilight breeze gust thunder lightning frost ice crystal diamond petal branch blossom orchard harvest grain wheat berry apple lemon olive peach cherry cocoa coffee spice pepper salt sugar
+bark blade vine moss fern reed thorn ridge slope trail path peak crest plain prairie savanna tundra glacier lagoon delta creek spring fountain waterfall cove
+
+# --- animals
+falcon eagle hawk fox wolf lion tiger bear otter raven swan dove owl bee ant fish whale dolphin horse pony deer elk lynx panda koala robin sparrow finch crane heron lark wren hare rabbit turtle gecko cobra viper python shark orca seal puffin bison moose badger beaver gazelle jaguar leopard cheetah mustang phoenix dragon griffin pegasus unicorn
+
+# --- tech and tools
+auto data code cloud net web app link hub lab kit tool desk box bot pilot agent assist engine machine robot brain mind logic neural cyber digital pixel byte bit chip circuit signal pulse beam ray flow stream loop sync stack deck board sheet page book note card post mail chat talk call ring bell chime voice echo vector scale shift drive run dash sprint rocket launch boost lift rise grow build craft make forge shape mold spin turn flip move push pull route map chart graph track trace scout guide quest seek find search spot point mark focus target aim goal growth
+tech smartly cloudy online mobile screen window panel button switch socket plug wire cable laser radar sonar sensor drone satellite network server portal gateway bridge tunnel engine motor gear wheel axis lever anchor compass beacon lantern lamp torch candle
+
+# --- business and people
+sales lead leads market brand pitch deal trade shop store order price cart pay invoice client customer team partner work company office boss manager studio factory agency venture founder startup business enterprise profit value merit trust unity support service care help friend buddy mate pal ally crew club guild
+member leader coach mentor expert guru wizard genie hero champ star ace pro chief head captain pilot ranger scout hunter maker builder baker smith writer author editor artist poet singer dancer player gamer racer runner rider driver sailor diver climber
+
+# --- content and media
+content blog video write story tale scribe news media podcast canvas draft paper letter word text quote poem song tune beat rhythm music art design color paint sketch image photo frame stage show play game movie reel clip film cinema studio gallery museum library
+idea vision dream spark muse prism palette
+
+# --- actions
+send reach share spread connect join bind weave blend mix match pair fuse merge start begin unlock reveal display view watch look see catch capture win earn gain save keep hold guard protect shield secure lock gate door tower castle fort dock port yard bridge
+follow listen speak tell ask answer reply invite greet welcome thank grow learn teach train study read write draw paint sing dance jump leap fly soar glide swim sail ride climb hike
+
+# --- places and objects
+home house nest den hive cell grid mesh farm lane road street town city plaza corner park square island harbor market
+wallet watch clock timer ring chain badge medal trophy crown throne banner flag stamp seal
+
+# --- extra brand-friendly
+apex zenith vertex vortex nexus zephyr aurora luna sol terra aqua lumen halo glow shine gleam flare glint twinkle spark sparkle bliss charm grace joy cheer smile laugh fun lucky fortune harmony balance bravo victory triumph legend heritage genuine honest
+whatsapp followup inbox message campaign outreach funnel pipeline marketing customer review premium classic modern urban metro nordic alpine pacific atlantic sunlit moonlit starlit

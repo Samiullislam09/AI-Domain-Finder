@@ -31,6 +31,70 @@ const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) ret
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s);
 const rank = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const bucket = (n) => (n <= 5 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
+
+// =====================  QUALITY ENGINE  =====================
+// Ek naam "clean" tabhi hai jab wo poori tarah 1-3 asli, professional English words se bana ho.
+// Words: (1) wordlist/brand-words.txt (curated, vetted)  (2) strict common-word fallback (top 4000, filtered).
+// Score q = 0..100 (0 = clean nahi). Chhota naam, kam words, curated words, aur AI ka meaning = zyada score.
+const CUR = new Set(readFileSync(path.join(here, "wordlist", "brand-words.txt"), "utf8").split(/\r?\n/).filter((l) => l.trim() && !l.startsWith("#")).join(" ").split(/\s+/).filter((w) => /^[a-z]{3,8}$/.test(w)));
+const sect = (hdr) => { const t = readFileSync(path.join(here, "wordlist", "brand-words.txt"), "utf8"); const i = t.indexOf("# --- " + hdr); if (i < 0) return []; const j = t.indexOf("# ---", i + 5); return t.slice(i, j < 0 ? undefined : j).split(/\r?\n/).filter((l) => !l.startsWith("#")).join(" ").split(/\s+/).filter((w) => /^[a-z]{3,8}$/.test(w)); };
+const ADJ = new Set(sect("quality"));                                  // bold, swift, old, blue ...
+const NATURE = new Set([...sect("nature"), ...sect("animals")]);       // oak, falcon, river ...
+const PEOPLE = new Set(sect("business and people"));                  // pilot, coach, guru ...
+const PLACES = new Set(sect("places and objects"));                   // harbor, garden, nest ...
+const NOUN_OK = new Set([...NATURE, ...PEOPLE, ...PLACES]);           // nouns that read like a real brand ("Bold Falcon", "Smart Pilot")
+const STOP = new Set("the and for that this with you not are from your all have but was will can has our one other they what when which where who why how out its were been being them their then than there these those into over under about after before again also any only just very much more most some such each both few many own same too her him his she let get got did does done off yet nor per via had say said say may might must shall should would could jan feb mar apr jun jul aug sep sept oct nov dec mon tue wed thu fri sat".split(" "));
+const BAD = new Set((
+  // sensitive / offensive / adult
+  "sex sexy porn xxx fuck shit damn dick cock nude naked rape kill dead death drug drugs gun bomb hate slut bitch ass crap piss weed beer wine drunk gay lust nazi terror attack murder suicide abuse cancer virus toxic poison weapon blood" +
+  // common person / place names that are not brand words
+  " john james david michael robert william richard thomas mark paul steve peter chris jack tom sam ben dan joe kate mary anna lisa sara emma jane anne bill bob jim tim tony andy kevin brian jason jeff gary larry harry henry george edward frank fred ray roy lee jay ken ron don rick nick eric alan adam alex amy ann beth carol diane dawn? helen jenny julie karen laura linda maria nancy sandra susan tina india china japan korea texas london paris york california florida africa europe asia america canada mexico italy spain france german english british indian chinese american" +
+  // web / UI junk
+  " click login email www http html https com org net privacy terms policy cookie cookies shipping reviews contact search cart checkout subscribe unsubscribe download upload submit comment comments posted forum thread url link links home page pages site sites blog? mens womens kids"
+).split(" ").filter((w) => w && !w.endsWith("?")));
+const BAD_ANY = /(fuck|shit|porn|nazi|rape|slut|bitch|dick|cock|nude|naked|sexy|\bsex)/;
+const FREQ = new Set(readFileSync(path.join(here, "wordlist", "words.txt"), "utf8").split(/\r?\n/).filter(Boolean).slice(0, 2500)
+  .filter((w) => /^[a-z]{4,7}$/.test(w) && !BAD.has(w) && !STOP.has(w) && !/(ing|ed|ly|ness|tion|ment|ity|ers)$/.test(w) && !(w.endsWith("s") && !CUR.has(w))));
+const isWord = (w) => CUR.has(w) || FREQ.has(w);
+function segment(n) { // best split into <=3 words: fewer parts first, then more curated words
+  const memo = new Map();
+  const go = (i) => {
+    if (i === n.length) return { parts: [], cur: 0 };
+    if (memo.has(i)) return memo.get(i);
+    let best = null;
+    for (let j = i + 3; j <= Math.min(n.length, i + 8); j++) {
+      const w = n.slice(i, j); if (!isWord(w)) continue;
+      const rest = go(j); if (!rest) continue;
+      const cand = { parts: [w, ...rest.parts], cur: rest.cur + (CUR.has(w) ? 1 : 0) };
+      if (cand.parts.length > 3) continue;
+      if (!best || cand.parts.length < best.parts.length || (cand.parts.length === best.parts.length && cand.cur > best.cur)) best = cand;
+    }
+    memo.set(i, best); return best;
+  };
+  return go(0);
+}
+function quality(x) {
+  if (BAD_ANY.test(x.n)) return { q: 0 };
+  const seg = segment(x.n);
+  if (!seg || !seg.parts.length) return { q: 0 };
+  const parts = seg.parts;
+  if (parts.some((w) => STOP.has(w) || BAD.has(w)) || new Set(parts).size !== parts.length) return { q: 0 };
+  // overlapping words like "leads"+"lead" look sloppy
+  if (parts.some((a, i) => parts.some((b, k) => i !== k && (a.includes(b) || b.includes(a))))) return { q: 0 };
+  let q = 40;
+  q += seg.cur === parts.length ? 20 : seg.cur * 2 >= parts.length ? 6 : 0;
+  const L = x.n.length; q += L <= 5 ? 30 : L === 6 ? 24 : L === 7 ? 18 : L === 8 ? 12 : L === 9 ? 8 : L === 10 ? 5 : L <= 12 ? 2 : 0;
+  q += parts.length === 1 ? 10 : parts.length === 2 ? 4 : 0;
+  const last = parts[parts.length - 1];
+  // "sense": natural phrase  (adjective + real noun)  |  1 real word  |  2-3 nature/place words (oak + field)
+  const midOk = parts.length < 3 || parts.slice(1, -1).every((w) => ADJ.has(w) || NOUN_OK.has(w));
+  const sense = parts.length === 1 || (parts.length >= 2 && ADJ.has(parts[0]) && NOUN_OK.has(last) && !ADJ.has(last) && midOk) || parts.every((w) => NATURE.has(w) || PLACES.has(w));
+  if (sense) q += 25;
+  if (x.m && !x.m.includes("+")) q += 3;
+  if (/ads|email/.test(x.n)) q -= 20;
+  return { q: Math.max(0, Math.min(100, q)), parts, sense };
+}
+
 const partsOf = (x) => (x.p || (x.m && x.m.includes("+") ? x.m.replace(/\s/g, "") : "")).split("+");
 
 // ---- read everything ----
@@ -53,20 +117,19 @@ for (const f of files.filter((f) => /^stats.*\.json$/.test(f)).sort()) {
 
 // ---- compact tuples ----
 const cats = [], catIdx = new Map();
-const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || "", topicMask(x)]; };
-all.sort((a, b) => rank(b) - rank(a) || a.n.localeCompare(b.n));
+const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0]; };
+for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; }
+// clean (q>0) naam pehle: score, phir chhota naam; baaki purane rank se
+all.sort((a, b) => (b.q > 0) - (a.q > 0) || (a.q > 0 ? b.q - a.q || a.n.length - b.n.length : rank(b) - rank(a)) || a.n.localeCompare(b.n));
 
-// top picks (meaning wale asli naam, chhote pehle)
-const tier = (x) => (x.m && !x.m.includes("+") ? 0 : 1);
-const okTop = (x) => {
-  if (/^(Generated|Phonetic|Manual:)/.test(x.cat || "") || (/^AI:/.test(x.cat || "") && !x.m)) return false;
-  if (tier(x) === 1) { const p = partsOf(x); if (p.length < 2 || /ads|email/.test(x.n) || p.some((a, i) => p.some((b, k) => i !== k && (a.includes(b) || b.includes(a))))) return false; }
-  return true;
-};
-const top = [], seenEnd = {};
-for (const x of all.filter(okTop).sort((a, b) => tier(a) - tier(b) || bucket(a.n.length) - bucket(b.n.length) || rank(b) - rank(a))) {
-  const p = partsOf(x), e = p.length > 1 ? p[p.length - 1] : x.n.slice(-3);
-  if ((seenEnd[e] || 0) >= 2) continue; seenEnd[e] = (seenEnd[e] || 0) + 1; top.push(x); if (top.length >= 12) break;
+// top picks: sirf clean naam, sabse zyada score pehle; ek hi word 2 se zyada baar nahi
+const top = [], used = {};
+for (const x of all) {
+  if (x.q < 60) break; // all sorted: clean naam score ke order mein
+  if (!x._sense) continue; // matlab saaf nahi (jaise "botdune") to top picks mein nahi
+  const ps = x._parts || [];
+  if (ps.some((w) => (used[w] || 0) >= 2)) continue;
+  ps.forEach((w) => { used[w] = (used[w] || 0) + 1; }); top.push(x); if (top.length >= 12) break;
 }
 
 const items = all.map(tuple);
@@ -76,4 +139,6 @@ const v = (updated || "0") + "-" + h.toString(36); // cache key: badlega jab bhi
 const summary = { v, updated, scanned, runs, free: all.length, types, hist, cats, top: top.map(tuple), first: all.slice(0, 40).map(tuple) };
 writeFileSync(path.join(DATA, "all.json"), JSON.stringify({ v, cats, items }));
 writeFileSync(path.join(DATA, "summary.json"), JSON.stringify(summary));
+console.log(`Clean naam (q>0): ${all.filter((x) => x.q > 0).length}, q>=60: ${all.filter((x) => x.q >= 60).length}`);
+console.log("TOP:", top.map((x) => x.n + "(" + x.q + ")").join(" "));
 console.log(`Index: ${all.length} naam, scanned ${scanned}, summary ${(JSON.stringify(summary).length / 1024).toFixed(0)} KB, all ${(JSON.stringify({ v, cats, items }).length / 1048576).toFixed(2)} MB`);
