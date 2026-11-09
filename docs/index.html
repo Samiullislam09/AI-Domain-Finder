@@ -102,7 +102,7 @@ function render() {
   el.innerHTML = r.slice(0, shown).map((x, i) => `
     <div class="row">
       <div class="no">${i + 1}</div>
-      <div class="name">${x.n}.com<small>${x.cat}${x.t ? " · " + x.t : ""}</small></div>
+      <div class="name">${x.n}.com<small>${x.m ? x.m + " · " : ""}${x.cat}${x.t ? " · " + x.t : ""}</small></div>
       <div class="act">
         <button class="fav ${favs.has(x.n) ? "on" : ""}" data-n="${x.n}" title="Shortlist">♥</button>
         <button data-copy="${x.n}.com">Copy</button>
@@ -126,7 +126,7 @@ $("more").onclick = () => { shown += 100; render(); };
     // Data GitHub repo se seedha aata hai (miner push karta hai, Vercel redeploy nahi hota)
     const RAW = "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/main/data/";
     const get = (f) => fetch(RAW + f + "?t=" + Math.floor(Date.now() / 300000)).then((r) => { if (!r.ok) throw 0; return r.json(); });
-    const names = ["", ...[4, 5, 6, 7, 8, 9, 10].map((l) => "-len" + l)];
+    const names = ["", ...[4, 5, 6, 7, 8, 9, 10].map((l) => "-len" + l), "-len8-10", "-len11-13", "-len14-17"];
     const res = await Promise.all(names.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
     const seen = new Set(), f = [], hist = {}, lens = {};
     let scanned = 0, runs = 0, upd = "";

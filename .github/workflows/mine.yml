@@ -15,21 +15,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        len: [4, 5, 6, 7, 8, 9, 10]   # har length ki alag mining (parallel)
+        range: ["8-10", "11-13", "14-17"]   # naam ki total letter range (alag mining, parallel)
     concurrency:
-      group: mine-${{ matrix.len }}
+      group: mine-${{ matrix.range }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Mine ${{ matrix.len }} letter
+      - name: Mine ${{ matrix.range }} letter
         timeout-minutes: 25
         continue-on-error: true
         run: node miner.mjs
         env:
-          LEN: ${{ matrix.len }}
+          RANGE: ${{ matrix.range }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL }}
           MINE_MINUTES: "20"
@@ -40,7 +40,7 @@ jobs:
           git config user.email "domain-miner@users.noreply.github.com"
           git add data
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "Mine ${{ matrix.len }} letter: new free domains"
+          git commit -m "Mine ${{ matrix.range }} letter: new free domains"
           for i in 1 2 3 4 5 6; do
             git pull --rebase && git push && exit 0
             sleep $((RANDOM % 10 + 3))

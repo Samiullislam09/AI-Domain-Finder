@@ -1,0 +1,17 @@
+{
+ "scanned": 240,
+ "free": 159,
+ "runs": 1,
+ "cursor": 240,
+ "aiOk": 0,
+ "aiFail": 0,
+ "updated": "2026-11-09T10:22:17.678Z",
+ "history": {
+  "2026-11-09": {
+   "s": 240,
+   "f": 159
+  }
+ },
+ "len": "11-13",
+ "model": "nvidia/nemotron-3-ultra-550b-a55b"
+}
