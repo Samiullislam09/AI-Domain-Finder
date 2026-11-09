@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f4f5f8">
+<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
 <meta name="description" content="Browse .com domain names that are still available, found by an automated AI miner.">
 <title>Domain Miner - Available .com names</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23673de6'/%3E%3Ccircle cx='14' cy='14' r='5.5' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='m18.2 18.2 5.3 5.3' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -120,6 +121,9 @@
   }
   @media (min-width:1800px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
+  .sk{min-height:96px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+  .sk i{display:block;height:12px;border-radius:6px;background:var(--line);width:55%}
+  .sk i+i{width:35%;height:10px}
   /* activity */
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
   .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px}
@@ -281,12 +285,12 @@
         <section class="sec" id="topSec">
           <div class="sec-h"><h2>Top picks</h2></div>
           <p class="sec-sub">Real-word names with a clear meaning, shortest first.</p>
-          <div class="grid" id="top"></div>
+          <div class="grid" id="top"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
         </section>
 
         <section class="sec">
           <div class="sec-h"><h2 id="allH">All names</h2></div>
-          <div class="grid" id="list"></div>
+          <div class="grid" id="list"><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div><div class="card sk"><i></i><i></i></div></div>
           <div id="sentinel"></div>
           <p class="end" id="end" hidden>You reached the end.</p>
         </section>
@@ -340,6 +344,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const BASE = new URLSearchParams(location.search).get("src") || "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/main/data/";
+const IBASE = new URLSearchParams(location.search).get("src") || "https://raw.githubusercontent.com/Samiullislam09/AI-Domain-Finder/index/"; // compact index (single-commit branch)
 const TAGS = ["", ...[4,5,6,7,8,9,10].map((l) => "-len" + l), "-len8-10","-len11-13","-len14-17",
   "-w1-len3-5","-w1-len6-8","-w2-len5-7","-w2-len8-10","-w2-len11-14","-w3-len8-11","-w3-len12-14","-w3-len15-18"];
 
@@ -357,7 +362,7 @@ const TOPICS = [
 const topicsOf = (x) => { const s = (x.n + " " + (x.m || "")).toLowerCase(); const r = TOPICS.filter((t) => t[2].split(" ").some((k) => s.includes(k))).map((t) => t[0]); return r.length ? r : ["other"]; };
 const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["other", "Other"]]);
 
-const st = { all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
+const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 
@@ -426,7 +431,7 @@ function appendMore() {
   if (st.shown >= st.cur.length) return;
   const next = st.cur.slice(st.shown, st.shown + 36); st.shown += next.length;
   $("list").insertAdjacentHTML("beforeend", next.map(cardHTML).join(""));
-  $("end").hidden = st.shown < st.cur.length || st.cur.length < 36;
+  $("end").hidden = st.partial || st.shown < st.cur.length || st.cur.length < 36;
 }
 function fill() { let g = 0; while (st.tab === "discover" && st.shown < st.cur.length && $("sentinel").getBoundingClientRect().top < innerHeight + 900 && g++ < 80) appendMore(); }
 
@@ -449,8 +454,8 @@ function renderDiscover() {
   st.cur = filtered(); st.shown = 0; $("list").innerHTML = ""; $("end").hidden = true;
   computeFacets(); renderPanel(); renderApplied();
   const topSec = $("topSec"); topSec.hidden = !!isFiltering();
-  if (!topSec.hidden) { const t = topPicks(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
-  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.cur.length) + ")";
+  if (!topSec.hidden) { const t = st.topPre.length ? st.topPre : topPicks(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
+  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " \u00b7 loading full list" : "");
   if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
   fill();
 }
@@ -481,20 +486,21 @@ function optHTML(f, v, label, count, type, checked) {
 function secHTML(key, title, body) {
   return `<details class="fsec" data-sec="${key}" ${st.open[key] ? "open" : ""}><summary>${title}<svg><use href="#i-chev"/></svg></summary><div class="flist">${body}</div></details>`;
 }
+const C = (n) => (st.partial ? null : n || 0);
 function renderPanel() {
   const f = st.fac, act = activeCount(), el = $("sheet"), a = document.activeElement, focus = a && a.dataset && a.dataset.f ? a.dataset.f + ":" + a.value : "";
-  const topics = [...TOPICS.map((t) => t[0]), "other"].filter((id) => (f.topics[id] || 0) > 0 || st.topics.has(id) || st.all.some((x) => x._t.includes(id)));
+  const topics = st.partial ? [...TOPICS.map((t) => t[0]), "other"] : [...TOPICS.map((t) => t[0]), "other"].filter((id) => (f.topics[id] || 0) > 0 || st.topics.has(id) || st.all.some((x) => x._t.includes(id)));
   el.innerHTML = `
     <div class="fp-head"><h2>Filters${act ? `<small>${act} applied</small>` : ""}</h2><button class="linkbtn" data-clear ${isFiltering() ? "" : "disabled"}>Clear all</button><button class="fp-close" id="closeF" aria-label="Close filters"><svg><use href="#i-x"/></svg></button></div>
     <div class="fp-body">
-      ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], f.topics[id] || 0, "checkbox", st.topics.has(id))).join(""))}
-      ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], f.words[w] || 0, "checkbox", st.words.has(w))).join(""))}
-      ${secHTML("lens", "Length", [6, 9, 12, 13].map((k) => optHTML("lens", k, LABEL.lens[k], f.lens[k] || 0, "checkbox", st.lens.has(k))).join(""))}
+      ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], C(f.topics[id]), "checkbox", st.topics.has(id))).join(""))}
+      ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
+      ${secHTML("lens", "Length", [6, 9, 12, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
       ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
     </div>
-    <div class="fp-foot"><p class="fp-note"><b>${n0(st.cur.length)}</b> of ${n0(st.all.length)} names</p><button class="apply" id="applyF">Show ${n0(st.cur.length)} names</button></div>`;
+    <div class="fp-foot"><p class="fp-note"><b>${n0(st.partial ? st.free : st.cur.length)}</b> ${st.partial ? "names" : "of " + n0(st.all.length) + " names"}</p><button class="apply" id="applyF">${st.partial ? "Show names" : "Show " + n0(st.cur.length) + " names"}</button></div>`;
   if (focus) { const [ff, vv] = focus.split(":"); const t = el.querySelector(`[data-f="${ff}"][value="${vv}"]`); if (t) t.focus({ preventScroll: true }); }
-  $("cTopic").innerHTML = topics.map((id) => `<button class="chip" data-quick="${id}" aria-pressed="${st.topics.has(id)}">${esc(TOPIC_NAME[id])} <small>${n0(f.topics[id] || 0)}</small></button>`).join("");
+  $("cTopic").innerHTML = topics.map((id) => `<button class="chip" data-quick="${id}" aria-pressed="${st.topics.has(id)}">${esc(TOPIC_NAME[id])}${st.partial ? "" : ` <small>${n0(f.topics[id] || 0)}</small>`}</button>`).join("");
   const nb = $("nb"); nb.hidden = !act; nb.textContent = act;
 }
 function renderApplied() {
@@ -551,12 +557,30 @@ function renderActivity(d) {
   $("byDay").innerHTML = days.length ? '<div class="day hd"><span>Date</span><span>Checked</span><span>Available</span><span>Rate</span></div>' + days.map((k) => `<div class="day"><span>${k}</span><span>${n0(d.hist[k].s)}</span><span>${n0(d.hist[k].f)}</span><span>${pct(d.hist[k].f, d.hist[k].s)}</span><i><b style="width:${Math.max(1, Math.round((d.hist[k].s / mx) * 100))}%"></b></i></div>`).join("") : emptyHTML("No history yet", "The first full run will appear here.");
 }
 
-/* data */
-const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
-(async () => {
+/* data: fast path = summary.json (5 KB) + all.json (compact, cached in IndexedDB); fallback = old per-file loading */
+const TOPIC_IDS = [...TOPICS.map((t) => t[0]), "other"];
+const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
+const idb = {
+  open: () => new Promise((res, rej) => { try { const q = indexedDB.open("dm", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(); q.onblocked = () => rej(); } catch (e) { rej(e); } }),
+  async get(k) { try { const db = await this.open(); return await new Promise((res) => { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }); } catch { return null; } },
+  async set(k, v) { try { const db = await this.open(); db.transaction("kv", "readwrite").objectStore("kv").put(v, k); } catch {} },
+};
+const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
+function applySummary(d) {
+  st.scanned = d.scanned; st.upd = d.updated; st.free = d.free;
+  if (d.top && d.cats) st.topPre = d.top.map((t) => fromTuple(t, d.cats)); // top picks come from one place (the index builder)
+  $("strip").innerHTML = `<b>${n0(d.scanned)}</b> names scanned &middot; <b>${n0(d.free)}</b> available &middot; updated ${ago(d.updated)}`;
+  $("updTop").textContent = "Updated " + ago(d.updated);
+  renderActivity({ free: d.free, scanned: d.scanned, runs: d.runs, updated: d.updated, types: d.types, hist: d.hist });
+}
+const setAll = (all) => { st.all = all.items.map((t) => fromTuple(t, all.cats)); st.partial = false; };
+
+async function legacyLoad() { // old way: many small files (used only if summary.json / all.json are missing)
+  const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
   try {
     const res = await Promise.all(TAGS.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
     const seen = new Set(), types = {}, hist = {}; let scanned = 0, runs = 0, upd = "";
+    st.all = [];
     res.forEach(([fd, s], i) => {
       for (const x of fd) if (!seen.has(x.n)) { seen.add(x.n); x._t = topicsOf(x); st.all.push(x); }
       if (!s) return;
@@ -565,15 +589,27 @@ const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((
       types[k] = { s: s.scanned || 0, f: fd.length };
       for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
     });
-    st.scanned = scanned; st.upd = upd;
-    $("strip").innerHTML = `<b>${n0(scanned)}</b> names scanned &middot; <b>${n0(st.all.length)}</b> available &middot; updated ${ago(upd)}`;
-    $("updTop").textContent = "Updated " + ago(upd);
-    renderActivity({ free: st.all.length, scanned, runs, updated: upd, types, hist });
-    render();
+    st.partial = false; applySummary({ free: st.all.length, scanned, runs, updated: upd, types, hist }); render();
   } catch (e) {
     $("strip").innerHTML = "";
     $("list").innerHTML = emptyHTML("Data did not load", "Check your connection and reload the page."); $("topSec").hidden = true;
   }
+}
+
+(async () => {
+  renderPanel(); // filter panel shows immediately (counts appear once data is ready)
+  const sumP = getJ("summary.json").catch(() => null); // start the network request right away, in parallel with the cache read
+  const cached = await Promise.race([idb.get("all"), new Promise((r) => setTimeout(() => r(null), 700))]); // never wait long on the cache
+  if (cached && cached.all && cached.sum) { setAll(cached.all); applySummary(cached.sum); render(); } // previous visit: instant
+  const sum = await sumP;
+  if (!sum) { if (!cached) await legacyLoad(); return; }
+  if (cached && cached.sum.v === sum.v) { applySummary(sum); return; }
+  if (!cached) { st.free = sum.free; st.all = sum.first.map((t) => fromTuple(t, sum.cats)); st.topPre = sum.top.map((t) => fromTuple(t, sum.cats)); applySummary(sum); render(); }
+  try {
+    const all = await getJ("all.json");
+    idb.set("all", { all, sum });
+    if (!cached || (scrollY < 200 && !isFiltering())) { setAll(all); applySummary(sum); render(); }
+  } catch (e) { if (!cached) await legacyLoad(); }
 })();
 </script>
 </body>

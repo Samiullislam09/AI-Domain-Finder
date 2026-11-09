@@ -56,10 +56,38 @@ jobs:
           done
           exit 1
 
+  # Saari found/stats files ko 2 compact files mein jodta hai (website tez load ho) aur alag "index" branch par ek hi commit se overwrite karta hai
+  # (isse main branch ki history nahi badhti).
+  index:
+    needs: mine
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build compact index
+        run: node build-index.mjs
+      - name: Publish to the index branch
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/idx && cp data/all.json data/summary.json /tmp/idx/
+          cd /tmp/idx
+          git init -q -b index
+          git config user.name "domain-miner"
+          git config user.email "domain-miner@users.noreply.github.com"
+          git add all.json summary.json
+          git commit -q -m "Compact index"
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          git push -f -q origin index
+
   # Cron GitHub par bharosemand nahi hota, isliye har run khatam hone par agli run khud shuru karta hai (24/7 chain).
   # Roakne ke liye: Actions mein run ko Cancel karo ya workflow ko Disable karo.
   rerun:
-    needs: mine
+    needs: [mine, index]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
@@ -67,7 +95,7 @@ jobs:
       contents: read
     steps:
       - name: Wait first if the run failed (taaki tez loop na bane)
-        if: ${{ needs.mine.result != 'success' }}
+        if: ${{ needs.mine.result != 'success' || needs.index.result != 'success' }}
         run: sleep 600
       - name: Start the next run
         env:
