@@ -1,14 +1,14 @@
 {
- "scanned": 42273,
+ "scanned": 49932,
  "free": 2809,
- "runs": 5,
- "cursor": 48400,
- "aiOk": 88,
- "aiFail": 4,
- "updated": "2026-11-09T22:44:09.389Z",
+ "runs": 6,
+ "cursor": 57960,
+ "aiOk": 96,
+ "aiFail": 6,
+ "updated": "2026-11-09T23:25:25.338Z",
  "history": {
   "2026-11-09": {
-   "s": 42273,
+   "s": 49932,
    "f": 2809
   }
  },
@@ -43,9 +43,9 @@
   "mistralai/mistral-large-4-1t-a52b": 2,
   "nvidia/ising-calibration-1.5-31b": 2,
   "meta/llama-3.2-90b-vision-instruct": 2,
-  "nvidia/nemotron-3-ultra-550b-a55b": 1,
-  "google/diffusiongemma-26b-a4b-it": 1
+  "google/diffusiongemma-26b-a4b-it": 2,
+  "nvidia/nemotron-3.5-lightning-30b-a3b": 1
  },
- "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
- "goodModel": "nvidia/nemotron-3.5-lightning-30b-a3b"
+ "model": "nvidia/nemotron-3-ultra-550b-a55b",
+ "goodModel": "nvidia/nemotron-3-ultra-550b-a55b"
 }
