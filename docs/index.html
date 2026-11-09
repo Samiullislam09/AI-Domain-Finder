@@ -209,12 +209,14 @@
     body{padding-bottom:0}
     nav.bottom,.scrim,#openF,.chips{display:none}
     .tabs,.upd{display:flex}
-    .topbar-in{height:64px;padding:0 24px;gap:32px}
-    .wrap{padding:28px 24px 0}
+    .topbar-in{max-width:none;height:64px;padding:0 24px;gap:32px}
+    .wrap{max-width:none;padding:0}
+    #t-saved,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
+    .content{padding:24px 28px 0 20px;max-width:1560px}
     .head h1{font-size:30px;margin-top:0}
     .head p{font-size:15px}
-    .discover{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start}
-    .filters{position:sticky;top:76px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;height:calc(100vh - 108px);transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);order:-1}
+    .discover{display:grid;grid-template-columns:240px minmax(0,1fr);gap:0;align-items:start}
+    .filters{position:sticky;top:64px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;height:calc(100vh - 64px);transform:none;visibility:visible;transition:none;z-index:1;border:0;border-right:1px solid var(--line);border-radius:0;order:-1}
     .fp-close,.apply{display:none}
     .fp-note{display:block}
     .fp-head{padding:14px 12px 12px 16px}
@@ -347,7 +349,7 @@ const TOPICS = [
   ["ai", "AI & Automation", "auto smart bot pilot agent assist genie wizard machine engine robot brain mind logic neural cyber digit code data cloud"],
   ["social", "Social & Chat", "chat whatsapp social message mail inbox talk post follow friend buddy mate connect community voice"],
   ["content", "Content & Media", "content blog video write story page book note scribe news media podcast canvas draft"],
-  ["shop", "Commerce & Customers", "shop store order customer client review support price cart pay market trade invoice"],
+  ["shop", "Shop & Customers", "shop store order customer client review support price cart pay market trade invoice"],
   ["nature", "Nature & Outdoors", "ocean forest sky mountain river leaf tree stone sun moon star rain wind field valley lake sea garden flower meadow grass"],
   ["power", "Speed & Power", "swift quick fast rapid bold strong sharp prime peak rocket flash bolt spark pulse forge storm fire thunder power turbo"],
 ];
