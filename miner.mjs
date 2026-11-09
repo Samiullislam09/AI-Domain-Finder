@@ -119,7 +119,7 @@ Requirements:
 - Easy to say and spell for Indian English speakers; people should instantly understand it. Bold, modern, memorable, professional.
 Strictly avoid: random letter strings (like Vomepo, Zokati, Vavodo), invented fantasy words, difficult spellings, foreign-sounding names, and generic use of Tech, Digital, AI, Solutions, Systems.
 Do NOT repeat: ${avoid}
-Reply with ONLY a JSON array of objects: [{"n":"name","m":"the two words / meaning"}]`;
+Reply with ONLY a JSON array of objects: [{"n":"name","p":"the words joined by + (example: wide+open+sky)","m":"short plain-English meaning"}]`;
   const list = await loadModels();
   const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...PREFER, ...list, ...ODD, process.env.NVIDIA_MODEL].filter(Boolean))].filter((m) => !(stats.bad || []).includes(m) && ((stats.slow || {})[m] || 0) < 2);
   let slowFails = 0;
@@ -139,11 +139,11 @@ Reply with ONLY a JSON array of objects: [{"n":"name","m":"the two words / meani
       if (!arr.length) arr = [...text.matchAll(/"([A-Za-z]{4,12})"/g)].map((x) => x[1]);
       const out = [];
       for (const raw of arr) {
-        const nm = typeof raw === "object" && raw ? raw.n || raw.name : raw, mean = typeof raw === "object" && raw ? String(raw.m || raw.meaning || "").slice(0, 90) : "";
+        const nm = typeof raw === "object" && raw ? raw.n || raw.name : raw, mean = typeof raw === "object" && raw ? String(raw.m || raw.meaning || "").slice(0, 90) : "", parts = typeof raw === "object" && raw ? String(raw.p || "").toLowerCase().replace(/[^a-z+]/g, "") : "";
         const n = String(nm || "").toLowerCase().trim().replace(/\.com$/, "");
         if (!(LMIN ? n.length >= LMIN && n.length <= LMAX && /^[a-z]+$/.test(n) : /^[a-z]{8,16}$/.test(n)) || aiSeen.has(n)) continue;
         aiSeen.add(n); appendFileSync(F_CHECKED, n + "\n");
-        if (looksBrand(n)) out.push({ n, cat, m: mean });
+        if (looksBrand(n)) out.push({ n, cat, m: mean, ...(parts.split("+").join("") === n && parts.includes("+") ? { p: parts } : {}) });
       }
       if (out.length) { stats.aiOk++; stats.goodModel = MODEL = model; if (stats.slow) delete stats.slow[model]; return out; }
       console.log("AI khali/filter:", model);
@@ -188,13 +188,13 @@ let sinceSave = 0, newFree = 0;
 console.log(`Miner shuru: ${MINUTES} min, model=${MODEL}, AI key ${KEY ? "hai" : "NAHI"}, compound candidates=${PAIRS.length}, pehle se free=${found.length}`);
 async function worker(queue) {
   while (queue.length && Date.now() < deadline) {
-    const { n, cat, m, r: rk } = queue.shift();
+    const { n, cat, m, p: pp, r: rk } = queue.shift();
     if (have.has(n)) continue;
     const dns = await dnsHas(`${n}.com`);
     const r = dns === true ? "taken" : await registry(n);
     if (r === "unknown") continue;
     stats.scanned++; sinceSave++; bump("s");
-    if (r === "free") { have.add(n); found.push({ n, cat, s: score(n, cat), t: new Date().toISOString().slice(0, 10), ...(m ? { m } : {}) }); newFree++; bump("f"); console.log("FREE", n + ".com", `(${cat})`); }
+    if (r === "free") { have.add(n); found.push({ n, cat, s: score(n, cat), t: new Date().toISOString().slice(0, 10), ...(m ? { m } : {}), ...(pp ? { p: pp } : {}) }); newFree++; bump("f"); console.log("FREE", n + ".com", `(${cat})`); }
     if (sinceSave >= 300) { sinceSave = 0; save(); }
     await sleep(60);
   }
