@@ -103,6 +103,9 @@ const partsOf = (x) => (x.p || (x.m && x.m.includes("+") ? x.m.replace(/\s/g, ""
 const files = readdirSync(DATA);
 const seen = new Map();
 for (const f of files.filter((f) => /^found.*\.json$/.test(f)).sort()) for (const x of readJson(path.join(DATA, f), [])) if (x && x.n && (!seen.has(x.n) || (!seen.get(x.n).m && x.m))) seen.set(x.n, x); // meaning wali entry ko tarjeeh
+// verify.mjs ne jo naam ab registered paaye (state/taken.json) unko available list se hata do
+const takenMap = readJson(path.join(here, "state", "taken.json"), {});
+for (const n of Object.keys(takenMap)) seen.delete(n);
 const all = [...seen.values()];
 
 const types = {}, hist = {}; let scanned = 0, runs = 0, updated = "";
@@ -149,9 +152,11 @@ const items = all.map(tuple);
 const raw = JSON.stringify({ cats, items }); let h = 2166136261;
 for (let i = 0; i < raw.length; i += 5) h = Math.imul(h ^ raw.charCodeAt(i), 16777619) >>> 0;
 const v = (updated || "0") + "-" + h.toString(36); // cache key: badlega jab bhi data ya ranking badle
-const summary = { v, updated, scanned, runs, free: all.length, types, hist, cats, top: top.map(tuple), topPool: pool.map(tuple) };
+const summary = { v, updated, scanned, runs, free: all.length, types, hist, cats, top: top.map(tuple), topPool: pool.map(tuple),
+  taken: Object.values(takenMap).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).slice(0, 300), takenTotal: Object.keys(takenMap).length };
 writeFileSync(path.join(DATA, "all.json"), JSON.stringify({ v, cats, items }));
 writeFileSync(path.join(DATA, "summary.json"), JSON.stringify(summary));
 console.log(`Clean naam (q>0): ${all.filter((x) => x.q > 0).length}, q>=60: ${all.filter((x) => x.q >= 60).length}`);
 console.log("TOP:", top.map((x) => x.n + "(" + x.q + ")").join(" "));
+console.log(`Taken (verify se hata): ${Object.keys(takenMap).length}`);
 console.log(`Index: ${all.length} naam, scanned ${scanned}, summary ${(JSON.stringify(summary).length / 1024).toFixed(0)} KB, all ${(JSON.stringify({ v, cats, items }).length / 1048576).toFixed(2)} MB`);

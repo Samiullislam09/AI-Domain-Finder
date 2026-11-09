@@ -3,3 +3,4 @@ results/
 node_modules/
 data/all.json
 data/summary.json
+state/

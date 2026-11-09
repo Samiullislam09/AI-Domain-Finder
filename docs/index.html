@@ -440,7 +440,8 @@ try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } cat
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 st.vf = LS.get("dm.vf", {});          // live-check results saved on this device: name -> { s: "free"|"taken", t: time }
-st.bought = LS.get("dm.bought", {});  // names that were available when found but have since been registered
+st.bought = LS.get("dm.bought", {});  // names this browser found taken
+st.gb = {}; st.takenTotal = 0;          // names the server re-verify job found taken (same for everyone)
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
@@ -464,7 +465,8 @@ function nameHTML(x) { // words are shown in alternating colour so long names re
 /* ---------- live availability check: browser -> Verisign RDAP (CORS enabled). Every visible name is verified once per 20 minutes. ---------- */
 const VF_TTL = 20 * 60000, checking = new Set(), vq = [];
 let vActive = 0, vOk = 0, vFail = 0, vTimer = 0;
-const boughtCount = () => Object.keys(st.bought).length;
+const allBought = () => ({ ...st.gb, ...st.bought });
+const boughtCount = () => Math.max(Object.keys(allBought()).length, st.takenTotal || 0);
 const heading = () => (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " · loading full list" : "");
 function vfText(n) { const r = st.vf[n]; return checking.has(n) ? "checking…" : r && r.s === "free" && Date.now() - r.t < VF_TTL ? "live checked" : ""; }
 function setVf(n) { const t = vfText(n); document.querySelectorAll(`[data-vf="${n}"]`).forEach((e) => { e.textContent = t; }); }
@@ -476,7 +478,7 @@ function verifyNames(names) {
   if (st.vOff) return;
   for (const n of names) {
     const r = st.vf[n];
-    if ((r && Date.now() - r.t < VF_TTL) || checking.has(n) || st.bought[n]) { setVf(n); continue; }
+    if ((r && Date.now() - r.t < VF_TTL) || checking.has(n) || st.bought[n] || st.gb[n]) { setVf(n); continue; }
     checking.add(n); vq.push(n); setVf(n);
   }
   pump();
@@ -496,7 +498,7 @@ function pump() {
     });
   }
 }
-function applyBought() { const b = st.bought; if (!boughtCount()) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
+function applyBought() { const b = allBought(); if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
 function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
 function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; $("homeStat").innerHTML = h; }
 function refreshTops() {
@@ -504,7 +506,7 @@ function refreshTops() {
   else if (st.tab === "discover" && !$("topSec").hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.map(cardHTML).join(""); verifyDom($("top")); }
 }
 function markBought(n) { // someone registered it: remove from every list, count it under "Bought"
-  if (st.bought[n]) return;
+  if (st.bought[n] || st.gb[n]) return;
   const x = st.all.find((y) => y.n === n) || st.topPre.find((y) => y.n === n); if (!x) return;
   st.bought[n] = { n: x.n, cat: x.cat, s: x.s, t: x.t, m: x.m, p: x.p, q: x.q, bt: new Date().toISOString() };
   LS.set("dm.bought", st.bought);
@@ -620,13 +622,13 @@ function renderDiscover() {
   fill();
 }
 function renderSaved() {
-  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(st.bought).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
+  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(allBought()).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
   $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
   $("saved").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark on a name to keep it here.");
   verifyDom($("saved"));
 }
 function renderBought() {
-  const r = Object.values(st.bought).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
+  const r = Object.values(allBought()).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
   $("boughtSub").textContent = r.length ? n0(r.length) + (r.length === 1 ? " name was" : " names were") + " available when we found them and have since been registered." : "Names from our list that someone else has registered.";
   $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Names are checked live while you browse.");
 }
@@ -741,7 +743,9 @@ const idb = {
 };
 const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 function applySummary(d) {
-  st.scanned = d.scanned; st.upd = d.updated; st.free = Math.max(0, d.free - boughtCount());
+  st.gb = {}; for (const x of d.taken || []) st.gb[x.n] = x; st.takenTotal = d.takenTotal || 0;
+  st.scanned = d.scanned; st.upd = d.updated; st.free = Math.max(0, d.free - Object.keys(st.bought).filter((n) => !st.gb[n]).length); // server already removed its own taken names
+  updateBought();
   const pl = d.topPool || d.top; if (pl && d.cats) { st.topPre = pl.map((t) => fromTuple(t, d.cats)); applyBought(); } // top picks come from one place (the index builder)
   $("updTop").textContent = "Updated " + ago(d.updated);
   updateStrip();

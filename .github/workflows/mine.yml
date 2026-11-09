@@ -56,18 +56,63 @@ jobs:
           done
           exit 1
 
-  # Saari found/stats files ko 2 compact files mein jodta hai (website tez load ho) aur alag "index" branch par ek hi commit se overwrite karta hai
-  # (isse main branch ki history nahi badhti).
-  index:
-    needs: mine
-    if: ${{ always() && !cancelled() }}
+  # Pehle se mile hue naamon ko dobara registry se check karta hai (mining ke saath-saath chalta hai).
+  # Jo naam ab registered nikle wo state/taken.json mein jate hain; index job unko available list se hata deta hai.
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
+    concurrency:
+      group: verify
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Load the last published index and state
+        run: |
+          mkdir -p state
+          if git fetch --depth=1 origin index; then
+            git show FETCH_HEAD:all.json > data/all.json 2>/dev/null || rm -f data/all.json
+            for f in verified.json taken.json; do git show FETCH_HEAD:$f > state/$f 2>/dev/null || rm -f state/$f; done
+          fi
+      - name: Re-verify found names
+        continue-on-error: true
+        run: node verify.mjs
+        env:
+          VERIFY_MINUTES: "18"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verify-state
+          path: state/
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # Saari found/stats files ko 2 compact files mein jodta hai (website tez load ho), bike hue naam hata deta hai,
+  # aur alag "index" branch par ek hi commit se overwrite karta hai (isse main branch ki history nahi badhti).
+  index:
+    needs: [mine, verify]
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Get the verify state
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: verify-state
+          path: state
+      - name: Fall back to the last published state
+        run: |
+          mkdir -p state
+          if [ ! -f state/taken.json ] || [ ! -f state/verified.json ]; then
+            git fetch --depth=1 origin index || true
+            for f in verified.json taken.json; do [ -f state/$f ] || git show FETCH_HEAD:$f > state/$f 2>/dev/null || rm -f state/$f; done
+          fi
       - name: Build compact index
         run: node build-index.mjs
       - name: Publish to the index branch
@@ -75,11 +120,12 @@ jobs:
           TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/idx && cp data/all.json data/summary.json /tmp/idx/
+          cp state/verified.json state/taken.json /tmp/idx/ 2>/dev/null || true
           cd /tmp/idx
           git init -q -b index
           git config user.name "domain-miner"
           git config user.email "domain-miner@users.noreply.github.com"
-          git add all.json summary.json
+          git add -A
           git commit -q -m "Compact index"
           git remote add origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           git push -f -q origin index
@@ -87,7 +133,7 @@ jobs:
   # Cron GitHub par bharosemand nahi hota, isliye har run khatam hone par agli run khud shuru karta hai (24/7 chain).
   # Roakne ke liye: Actions mein run ko Cancel karo ya workflow ko Disable karo.
   rerun:
-    needs: [mine, index]
+    needs: [mine, verify, index]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
