@@ -98,7 +98,7 @@ async function loadModels() {
     const ids = (await r.json()).data.map((m) => m.id).filter((id) => /nemotron|llama|mistral|qwen|gemma|deepseek|phi|granite/i.test(id) && !/embed|rerank|vision|guard|safety|reward|parse|clip|retriev|code|math|translate|vila|ocr|asr|tts|arctic|-vl|vl-/i.test(id));
     const size = (id) => { const m = id.match(/(\d+(?:\.\d+)?)b/i); return m ? +m[1] : 50; };
     const cost = (id) => { let c = Math.abs(Math.log(size(id) / 50)); if (/ultra|r1|reason|think|405b|235b|480b|550b|253b/i.test(id)) c += 3; if (size(id) < 8) c += 3; if (/instruct|chat/i.test(id)) c -= 0.3; return c; };
-    RANKED = ids.sort((x, y) => cost(x) - cost(y)).slice(0, 6);
+    RANKED = ids.sort((x, y) => cost(x) - cost(y)).slice(0, 20);
     console.log("Model order:", RANKED.join(" > "));
   } catch (e) { console.log("Model list fail:", e.message); }
   return RANKED;
@@ -116,15 +116,17 @@ Each name must be a real English word, two real English words joined, or an obvi
 Do NOT repeat: ${avoid}
 Reply with ONLY a JSON array of strings.`;
   const list = await loadModels();
-  const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...list, process.env.NVIDIA_MODEL].filter(Boolean))].slice(0, 4);
+  const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...list, process.env.NVIDIA_MODEL].filter(Boolean))].filter((m) => !(stats.bad || []).includes(m) && ((stats.slow || {})[m] || 0) < 2);
+  let slowFails = 0;
   for (const model of tryModels) {
+    if (slowFails >= 3) break; // 3 slow/timeout ke baad is round ko chhod do
     try {
       const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST", headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model, temperature: 1.0, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(60000),
       });
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (!res.ok) { if ([400, 403, 404, 410, 422].includes(res.status)) { (stats.bad ||= []).push(model); console.log("Model chalta nahi, skip:", model, res.status); continue; } throw new Error("HTTP " + res.status); }
       const j = await res.json(); const ch = j.choices?.[0]?.message;
       const text = ch?.content || ch?.reasoning_content || "";
       let arr = []; const m = text.match(/\[[\s\S]*\]/);
@@ -137,9 +139,9 @@ Reply with ONLY a JSON array of strings.`;
         aiSeen.add(n); appendFileSync(F_CHECKED, n + "\n");
         if (looksBrand(n)) out.push({ n, cat });
       }
-      if (out.length) { stats.aiOk++; stats.goodModel = MODEL = model; return out; }
+      if (out.length) { stats.aiOk++; stats.goodModel = MODEL = model; if (stats.slow) delete stats.slow[model]; return out; }
       console.log("AI khali/filter:", model);
-    } catch (e) { console.log("AI fail:", model, e.message); if (stats.goodModel === model) stats.goodModel = ""; }
+    } catch (e) { slowFails++; stats.slow ||= {}; stats.slow[model] = (stats.slow[model] || 0) + 1; console.log("AI fail:", model, e.message); if (stats.goodModel === model) stats.goodModel = ""; }
   }
   stats.aiFail++;
   return [];
