@@ -241,7 +241,7 @@
     .tabs,.upd{display:flex}
     .topbar-in{max-width:none;height:64px;padding:0 24px;gap:32px}
     .wrap{max-width:none;padding:0}
-    #t-home,#t-saved,#t-bought,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
+    #t-saved,#t-bought,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
     .hero h1{font-size:40px}
     .content{padding:20px 12px 0 12px}
     .head h1{font-size:30px;margin-top:0}
@@ -282,8 +282,7 @@
     Domain Miner
   </a>
   <nav class="tabs" aria-label="Primary">
-    <button data-tab="home"><svg class="sm"><use href="#i-home"/></svg>Home</button>
-    <button data-tab="discover" aria-current="page"><svg class="sm"><use href="#i-compass"/></svg>Discover</button>
+    <button data-tab="home" aria-current="page"><svg class="sm"><use href="#i-home"/></svg>Home</button>
     <button data-tab="saved"><svg class="sm"><use href="#i-bookmark"/></svg>Saved</button>
     <button data-tab="bought"><svg class="sm"><use href="#i-bag"/></svg>Bought<span class="cn" data-bn>0</span></button>
     <button data-tab="activity"><svg class="sm"><use href="#i-activity"/></svg>Activity</button>
@@ -292,38 +291,6 @@
 </div></header>
 
 <main class="wrap">
-
-  <!-- HOME -->
-  <section class="tab" id="t-home" hidden>
-    <header class="hero">
-      <h1>Find a .com name that is actually available</h1>
-      <p>Domain Miner creates name ideas all day, checks each one against the .com registry, and keeps only the clean English-word names that are still unregistered.</p>
-      <form class="herosearch" id="heroForm">
-        <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="heroQ" type="search" placeholder="Search a word, like sun, pilot or leaf" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
-        <button class="cta" type="submit">Search</button>
-      </form>
-      <p class="statline" id="homeStat"></p>
-    </header>
-
-    <section class="sec">
-      <div class="sec-h row"><h2>Top picks</h2><span class="rowbtns"><button class="linkbtn shuf" data-shuffle><svg class="sm"><use href="#i-shuffle"/></svg>Shuffle</button><button class="linkbtn" data-tab="discover">View all</button></span></div>
-      <p class="sec-sub">A fresh set of the best names every time you visit.</p>
-      <div class="grid" id="homeTop"></div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-h"><h2>How it works</h2></div>
-      <div class="steps">
-        <div class="step"><b>1</b><h3>Ideas are generated</h3><p>AI and word lists create thousands of possible names from simple English words.</p></div>
-        <div class="step"><b>2</b><h3>Each name is checked</h3><p>Every idea is looked up in the official .com registry. Registered names are dropped.</p></div>
-        <div class="step"><b>3</b><h3>The best ones are ranked</h3><p>Names made of real, easy words rise to the top. Odd or random-looking names stay at the bottom.</p></div>
-      </div>
-    </section>
-
-    <section class="sec">
-      <div class="note"><h3>Names can be taken at any time</h3><p>A name is available at the moment it was checked. Someone else can register it later, so always confirm on a registrar before you decide. The Buy button checks live.</p></div>
-    </section>
-  </section>
 
   <!-- DISCOVER -->
   <section class="tab" id="t-discover">
@@ -390,7 +357,7 @@
     </div>
     <div>
       <h4>Explore</h4>
-      <div class="flinks"><button data-tab="home">Home</button><button data-tab="discover">Discover</button><button data-tab="saved">Saved</button><button data-tab="bought">Bought</button><button data-tab="activity">Activity</button></div>
+      <div class="flinks"><button data-tab="home">Home</button><button data-tab="saved">Saved</button><button data-tab="bought">Bought</button><button data-tab="activity">Activity</button></div>
     </div>
     <div>
       <h4>Before you buy</h4>
@@ -401,8 +368,7 @@
 </footer>
 
 <nav class="bottom" aria-label="Primary">
-  <button data-tab="home"><svg><use href="#i-home"/></svg>Home</button>
-  <button data-tab="discover" aria-current="page"><svg><use href="#i-compass"/></svg>Discover</button>
+  <button data-tab="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
   <button data-tab="saved"><svg><use href="#i-bookmark"/></svg>Saved</button>
   <button data-tab="bought"><svg><use href="#i-bag"/></svg>Bought<span class="cn" data-bn>0</span></button>
   <button data-tab="activity"><svg><use href="#i-activity"/></svg>Activity</button>
@@ -462,7 +428,7 @@ const boughtCount = () => Math.max(Object.keys(st.gb).length, st.takenTotal || 0
 const heading = () => (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " · loading full list" : "");
 function applyBought() { const b = st.gb; if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
 function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
-function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; $("homeStat").innerHTML = h; }
+function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; }
 function cardHTML(x) {
   const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") ? x.m : "", gone = !!x.taken;
   const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
@@ -572,17 +538,13 @@ function renderBought() {
   $("boughtSub").textContent = r.length ? n0(r.length) + (r.length === 1 ? " name was" : " names were") + " available when we found them and have since been registered." : "Names from our list that someone else has registered.";
   $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Our server re-checks the names regularly.");
 }
-function renderHome() {
-  updateStrip();
-  const t = st.topPre.length ? topPicks().slice(0, 6) : st.all.length ? topPicksLegacy().slice(0, 6) : [];
-  $("homeTop").innerHTML = t.length ? t.map(cardHTML).join("") : '<div class="card sk"><i></i><i></i></div>'.repeat(6);
-}
-const render = () => (st.tab === "home" ? renderHome() : st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : st.tab === "bought" ? renderBought() : 0);
+const render = () => (st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : st.tab === "bought" ? renderBought() : 0);
 
 function go(tab) {
+  if (tab === "home") tab = "discover"; // Home = the names page
   st.tab = tab;
-  for (const t of ["home", "discover", "saved", "bought", "activity"]) $("t-" + t).hidden = t !== tab;
-  document.querySelectorAll("[data-tab]").forEach((b) => { if (b.closest(".flinks")) return; if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  for (const t of ["discover", "saved", "bought", "activity"]) $("t-" + t).hidden = t !== tab;
+  document.querySelectorAll("[data-tab]").forEach((b) => { if (b.closest(".flinks")) return; if (b.dataset.tab === (tab === "discover" ? "home" : tab)) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   scrollTo(0, 0); render();
 }
 
@@ -653,7 +615,6 @@ $("sheet").addEventListener("change", (e) => {
 });
 $("sheet").addEventListener("toggle", (e) => { if (e.target.dataset && e.target.dataset.sec) st.open[e.target.dataset.sec] = e.target.open; }, true);
 $("scrim").onclick = () => sheet(false);
-$("heroForm").addEventListener("submit", (e) => { e.preventDefault(); st.q = $("heroQ").value.trim(); $("q").value = st.q; go("discover"); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
 $("q").addEventListener("input", (e) => { st.q = e.target.value; renderDiscover(); });
 new IntersectionObserver((e) => { if (e[0].isIntersecting) fill(); }, { rootMargin: "900px" }).observe($("sentinel"));
@@ -689,7 +650,6 @@ function applySummary(d) {
   $("updTop").textContent = "Updated " + ago(d.updated);
   updateStrip();
   renderActivity({ free: st.free, scanned: d.scanned, runs: d.runs, updated: d.updated, types: d.types, hist: d.hist });
-  if (st.tab === "home") renderHome();
 }
 const setAll = (all) => { st.all = all.items.map((t) => fromTuple(t, all.cats)); st.partial = false; applyBought(); };
 updateBought();
