@@ -1,14 +1,14 @@
 {
- "scanned": 12639,
+ "scanned": 13811,
  "free": 3,
- "runs": 3,
- "cursor": 12160,
- "aiOk": 37,
- "aiFail": 2,
- "updated": "2026-11-09T17:05:48.973Z",
+ "runs": 4,
+ "cursor": 13280,
+ "aiOk": 62,
+ "aiFail": 3,
+ "updated": "2026-11-09T17:26:58.545Z",
  "history": {
   "2026-11-09": {
-   "s": 12639,
+   "s": 13811,
    "f": 3
   }
  },
@@ -42,8 +42,9 @@
   "google/gemma-4-31b-it": 2,
   "deepseek-ai/deepseek-v4.1-flash": 2,
   "mistralai/mistral-large-4-1t-a52b": 2,
-  "nvidia/ising-calibration-1.5-31b": 1,
-  "meta/llama-3.2-90b-vision-instruct": 1
+  "nvidia/ising-calibration-1.5-31b": 2,
+  "meta/llama-3.2-90b-vision-instruct": 2,
+  "nvidia/nemotron-3-ultra-550b-a55b": 1
  },
  "goodModel": "google/diffusiongemma-26b-a4b-it"
 }
