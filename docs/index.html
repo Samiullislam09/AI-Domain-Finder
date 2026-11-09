@@ -59,22 +59,22 @@
   .iconbtn:active{background:var(--press)}
   .iconbtn[data-on="1"]{border-color:var(--brand);color:var(--brand)}
 
-  /* chips (mobile) + options (sidebar / sheet) */
+  /* quick chips (mobile) + applied filters */
   .chips{display:flex;gap:8px;overflow-x:auto;margin:12px -16px 0;padding:0 16px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chip,.seg button{height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;flex:none;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface);font-weight:550;font-size:14px;white-space:nowrap;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
-  .chip small,.seg button small{color:var(--mut);font-size:12px;font-weight:500}
-  .chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--tint);border-color:var(--brand);color:var(--brand)}
-  .chip[aria-pressed="true"] small,.seg button[aria-pressed="true"] small{color:var(--brand)}
-  .select{width:100%;height:40px;padding:0 36px 0 12px;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23626878' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;-webkit-appearance:none;appearance:none;font-size:14px;font-weight:550;color:var(--ink);cursor:pointer;transition:border-color .15s var(--ease)}
-  .select:hover,.select:focus{border-color:var(--brand)}
-  .select.m-only{margin-top:12px;height:44px;border-radius:12px}
-  .opts{display:flex;flex-direction:column;gap:2px}
-  .opts button{display:flex;align-items:center;justify-content:space-between;gap:8px;height:36px;padding:0 10px;border-radius:var(--r-inner);font-size:14px;font-weight:550;text-align:left;transition:background .15s var(--ease),color .15s var(--ease)}
-  .opts button small{color:var(--mut);font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
-  .opts button:hover{background:var(--press)}
-  .opts button[aria-pressed="true"]{background:var(--tint);color:var(--brand)}
-  .opts button[aria-pressed="true"] small{color:var(--brand)}
+  .chip{height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;flex:none;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface);font-weight:550;font-size:14px;white-space:nowrap;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+  .chip small{color:var(--mut);font-size:12px;font-weight:500}
+  .chip[aria-pressed="true"]{background:var(--tint);border-color:var(--brand);color:var(--brand)}
+  .chip[aria-pressed="true"] small{color:var(--brand)}
+  .applied{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 0}
+  .applied[hidden]{display:none}
+  .ap{display:inline-flex;align-items:center;gap:2px;height:30px;padding:0 4px 0 10px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-inner);font-size:13px;font-weight:550}
+  .ap button{width:22px;height:22px;display:grid;place-items:center;border-radius:5px;color:var(--mut);transition:background .15s var(--ease)}
+  .ap button:hover{background:var(--press)}
+  .ap svg{width:14px;height:14px}
+  .linkbtn{color:var(--brand);font-weight:600;font-size:13.5px;height:30px;padding:0 6px;border-radius:var(--r-inner)}
+  .linkbtn:hover{background:var(--tint)}
+  .linkbtn[disabled]{color:var(--mut);opacity:.5;cursor:default;background:none}
 
   /* sections */
   .sec{margin-top:24px}
@@ -157,19 +157,45 @@
   nav.bottom button{flex:1;max-width:200px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--mut);border-radius:12px;transition:color .15s var(--ease),background .15s var(--ease)}
   nav.bottom button[aria-current="page"]{color:var(--brand);background:var(--tint)}
 
-  /* filters: bottom sheet on mobile, sidebar on desktop */
+  /* filter panel: bottom sheet on mobile, full-height left rail on desktop */
   .scrim{position:fixed;inset:0;background:rgba(10,12,16,.45);opacity:0;pointer-events:none;transition:opacity .2s var(--ease);z-index:10}
-  .filters{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s var(--ease);z-index:11;visibility:hidden;max-height:86vh;overflow:auto}
+  .filters{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;height:86vh;display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;transform:translateY(100%);transition:transform .22s var(--ease);z-index:11;visibility:hidden}
   body.sheet-open .scrim{opacity:1;pointer-events:auto}
   body.sheet-open .filters{transform:none;visibility:visible}
-  .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-  .sheet-h h2{font-size:17px;margin:0}
-  .group{margin-top:16px}
-  .group-l{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px}
-  .seg{display:flex;flex-wrap:wrap;gap:8px}
-  .desk{display:none}
-  .apply{display:block;width:100%;height:48px;margin-top:20px;background:var(--brand);color:var(--brand-ink);border-radius:12px;font-weight:600;transition:background .15s var(--ease)}
+  .fp-head{display:flex;align-items:center;gap:8px;padding:14px 12px 12px 16px;border-bottom:1px solid var(--line)}
+  .fp-head h2{font-size:16px;margin:0;flex:1}
+  .fp-head h2 small{color:var(--mut);font-weight:500;font-size:13px;margin-left:4px}
+  .fp-close{width:36px;height:36px;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut)}
+  .fp-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 4px}
+  .fp-body::-webkit-scrollbar{display:none}
+  .fsec{border-bottom:1px solid var(--line)}
+  .fsec:last-child{border-bottom:0}
+  .fsec summary{list-style:none;display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 12px;cursor:pointer;font-size:12.5px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;border-radius:var(--r-inner)}
+  .fsec summary::-webkit-details-marker{display:none}
+  .fsec summary svg{width:16px;height:16px;color:var(--mut);transition:transform .2s var(--ease)}
+  .fsec[open] summary svg{transform:rotate(180deg)}
+  .flist{padding:0 8px 12px}
+  .opt{position:relative;display:flex;align-items:center;gap:10px;min-height:36px;padding:0 8px;border-radius:var(--r-inner);cursor:pointer;font-size:14px;transition:background .15s var(--ease)}
+  .opt:hover{background:var(--press)}
+  .opt input{position:absolute;opacity:0;pointer-events:none}
+  .cb{width:16px;height:16px;border:1.5px solid var(--mut);border-radius:4px;display:grid;place-items:center;flex:none;transition:background .15s var(--ease),border-color .15s var(--ease)}
+  .opt input[type=radio]+.cb{border-radius:50%}
+  .opt input:checked+.cb{background:var(--brand);border-color:var(--brand)}
+  .opt input[type=checkbox]:checked+.cb::after{content:"";width:8px;height:4.5px;border-left:2px solid var(--brand-ink);border-bottom:2px solid var(--brand-ink);transform:rotate(-45deg) translate(.5px,-.5px)}
+  .opt input[type=radio]:checked+.cb::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand-ink)}
+  .opt input:focus-visible+.cb{outline:2px solid var(--brand);outline-offset:2px}
+  .lbl{flex:1;min-width:0}
+  .opt input:checked~.lbl{font-weight:650}
+  .ct{color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .opt.dis{opacity:.4;pointer-events:none}
+  .fp-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+  .apply{display:block;width:100%;height:48px;background:var(--brand);color:var(--brand-ink);border-radius:12px;font-weight:600;transition:background .15s var(--ease)}
   .apply:active{background:var(--brand-press)}
+  .fp-note{display:none;margin:0;color:var(--mut);font-size:13px}
+  .fp-note b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .nb{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);color:var(--brand-ink);font-size:11px;font-weight:700;display:grid;place-items:center}
+  .nb[hidden]{display:none}
+  #openF{position:relative}
 
   /* floating */
   .totop{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.08);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease),background .15s var(--ease);z-index:6}
@@ -181,22 +207,17 @@
   /* desktop */
   @media (min-width:900px){
     body{padding-bottom:0}
-    nav.bottom,.scrim,#openF,.sheet-h,.apply,.chips{display:none}
-    .desk{display:block}
+    nav.bottom,.scrim,#openF,.chips{display:none}
     .tabs,.upd{display:flex}
     .topbar-in{height:64px;padding:0 24px;gap:32px}
     .wrap{padding:28px 24px 0}
     .head h1{font-size:30px;margin-top:0}
     .head p{font-size:15px}
-    .discover{display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px;align-items:start}
-    .filters{position:sticky;top:84px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);padding:6px 10px 12px;order:-1;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:none}
-    .filters::-webkit-scrollbar{display:none}
-    .filters .group{margin-top:10px}
-    .filters .group:first-of-type{margin-top:6px}
-    .group-l{padding:0 6px;margin:0 0 4px;font-size:11px}
-    .m-only{display:none}
-    .filters .seg{gap:4px;padding:0 4px;flex-wrap:nowrap}
-    .filters .seg button{height:28px;padding:0 9px;font-size:13px;flex:1 1 auto;justify-content:center}
+    .discover{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start}
+    .filters{position:sticky;top:76px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;height:calc(100vh - 108px);transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);order:-1}
+    .fp-close,.apply{display:none}
+    .fp-note{display:block}
+    .fp-head{padding:14px 12px 12px 16px}
     .tools{margin-top:16px}
     .totop{bottom:24px;right:24px}
     .toast{bottom:32px}
@@ -215,6 +236,7 @@
   <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
 
@@ -236,14 +258,7 @@
   <!-- DISCOVER -->
   <section class="tab" id="t-discover">
     <div class="discover">
-      <aside class="filters" id="sheet" aria-label="Filters">
-        <div class="sheet-h"><h2>Filters</h2><button class="iconbtn" id="closeF" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
-        <div class="group desk"><p class="group-l">Topic</p><select class="select" id="fTopic" aria-label="Topic"></select></div>
-        <div class="group desk"><p class="group-l">Words</p><div class="seg" id="fWords"></div></div>
-        <div class="group"><p class="group-l">Length</p><div class="seg" id="fLen"></div></div>
-        <div class="group"><p class="group-l">Sort by</p><div class="seg" id="fSort"></div></div>
-        <button class="apply" id="applyF">Show names</button>
-      </aside>
+      <aside class="filters" id="sheet" aria-label="Filters"></aside>
 
       <div class="content">
         <header class="head">
@@ -255,10 +270,10 @@
 
         <div class="tools">
           <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
-          <button class="iconbtn" id="openF" aria-label="Length and sort"><svg><use href="#i-filter"/></svg></button>
+          <button class="iconbtn" id="openF" aria-label="Filters"><svg><use href="#i-filter"/></svg><span class="nb" id="nb" hidden></span></button>
         </div>
-        <select class="select m-only" id="cTopic" aria-label="Topic"></select>
-        <div class="chips" id="cWords" aria-label="Words"></div>
+        <div class="chips" id="cTopic" aria-label="Topics"></div>
+        <div class="applied" id="applied" hidden></div>
 
         <section class="sec" id="topSec">
           <div class="sec-h"><h2>Top picks</h2></div>
@@ -339,13 +354,13 @@ const TOPICS = [
 const topicsOf = (x) => { const s = (x.n + " " + (x.m || "")).toLowerCase(); const r = TOPICS.filter((t) => t[2].split(" ").some((k) => s.includes(k))).map((t) => t[0]); return r.length ? r : ["other"]; };
 const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["other", "Other"]]);
 
-const st = { all: [], favs: new Set(), q: "", topic: "", words: 0, len: 0, sort: "best", tab: "discover", shown: 0, cur: [], counts: { w: {}, t: {} }, scanned: 0, upd: "" };
+const st = { all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: true, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
-const lenOk = (n, k) => !k || (k === 6 ? n <= 6 : k === 9 ? n >= 7 && n <= 9 : k === 12 ? n >= 10 && n <= 12 : n >= 13);
+const lenKey = (n) => (n <= 6 ? 6 : n <= 9 ? 9 : n <= 12 ? 12 : 13);
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
 const rank = (x) => base(x) - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const bucket = (n) => (n <= 5 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
@@ -378,16 +393,30 @@ function cardHTML(x) {
 }
 const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search"/></svg><b>${title}</b>${text}</div>`;
 
+/* filtering: several picks inside one group = OR, between groups = AND. Option counts respect the other active filters. */
+const FACETS = ["topics", "words", "lens"];
+const keysOf = (x, f) => (f === "topics" ? x._t : f === "words" ? [wordsOf(x)] : [lenKey(x.n.length)]);
+function facetPass(x, f) { return !st[f].size || keysOf(x, f).some((v) => st[f].has(v)); }
+function computeFacets() {
+  const ql = st.q.trim().toLowerCase(), fac = { topics: {}, words: {}, lens: {} };
+  for (const x of st.all) {
+    if (ql && !x.n.includes(ql) && !(x.m || "").toLowerCase().includes(ql)) continue;
+    const p = { topics: facetPass(x, "topics"), words: facetPass(x, "words"), lens: facetPass(x, "lens") };
+    for (const f of FACETS) if (FACETS.every((g) => g === f || p[g])) for (const v of keysOf(x, f)) fac[f][v] = (fac[f][v] || 0) + 1;
+  }
+  st.fac = fac;
+}
 function filtered() {
-  const q = st.q.trim().toLowerCase();
-  const r = st.all.filter((x) => (!q || x.n.includes(q) || (x.m || "").toLowerCase().includes(q)) && (!st.topic || x._t.includes(st.topic)) && (!st.words || wordsOf(x) === st.words) && lenOk(x.n.length, st.len));
+  const ql = st.q.trim().toLowerCase();
+  const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "words") && facetPass(x, "lens"));
   if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.localeCompare(b.n));
   else if (st.sort === "short") r.sort((a, b) => a.n.length - b.n.length || rank(b) - rank(a));
   else if (st.sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a));
   else r.sort((a, b) => a.n.localeCompare(b.n));
   return r;
 }
-const isFiltering = () => st.q.trim() || st.topic || st.words || st.len || st.sort !== "best";
+const activeCount = () => st.topics.size + st.words.size + st.lens.size;
+const isFiltering = () => st.q.trim() || activeCount() || st.sort !== "best";
 
 /* infinite scroll */
 function appendMore() {
@@ -415,11 +444,12 @@ function topPicks() { // only real, meaningful names: AI names with a meaning fi
 }
 function renderDiscover() {
   st.cur = filtered(); st.shown = 0; $("list").innerHTML = ""; $("end").hidden = true;
+  computeFacets(); renderPanel(); renderApplied();
   const topSec = $("topSec"); topSec.hidden = !!isFiltering();
   if (!topSec.hidden) { const t = topPicks(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
   $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.cur.length) + ")";
-  if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try a shorter search or another topic.");
-  fill(); drawFilters();
+  if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
+  fill();
 }
 function renderSaved() {
   const r = st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a));
@@ -435,21 +465,47 @@ function go(tab) {
   scrollTo(0, 0); render();
 }
 
-/* filters */
-function seg(el, opts, key, cls, withCount = true) {
-  el.innerHTML = opts.map(([v, l, c]) => `<button class="${cls}" data-k="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${l}${withCount && c != null ? ` <small>${c}</small>` : ""}</button>`).join("");
+/* filter panel (left rail on desktop, bottom sheet on mobile) */
+const LABEL = {
+  words: { 1: "1 word", 2: "2 words", 3: "3 words" },
+  lens: { 6: "Up to 6 letters", 9: "7-9 letters", 12: "10-12 letters", 13: "13+ letters" },
+  sort: [["best", "Best match"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
+};
+function optHTML(f, v, label, count, type, checked) {
+  const dis = count === 0 && !checked;
+  return `<label class="opt${dis ? " dis" : ""}"><input type="${type}" ${type === "radio" ? 'name="sort"' : ""} data-f="${f}" value="${v}" ${checked ? "checked" : ""} ${dis ? "disabled" : ""}><span class="cb"></span><span class="lbl">${esc(label)}</span>${count == null ? "" : `<span class="ct">${n0(count)}</span>`}</label>`;
 }
-function drawFilters() {
-  const c = st.counts, tot = st.all.length;
-  const topicOpts = [["", "All topics", n0(tot)], ...[...TOPICS.map((t) => t[0]), "other"].filter((id) => (c.t[id] || 0) > 0).map((id) => [id, TOPIC_NAME[id], n0(c.t[id])])];
-  const wordOpts = [[0, "Any words", n0(tot)], ...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, w + (w > 1 ? " words" : " word"), n0(c.w[w])])];
-  const lenOpts = [[0, "Any length"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]];
-   seg($("cWords"), wordOpts, "words", "chip");
-  for (const el of [$("cTopic"), $("fTopic")]) { el.innerHTML = topicOpts.map(([v, l, n]) => `<option value="${v}">${l} (${n})</option>`).join(""); el.value = st.topic; } seg($("fWords"), [...[1, 2, 3].filter((w) => (c.w[w] || 0) > 0).map((w) => [w, String(w)])], "words", "", false); seg($("fLen"), [[6, "≤ 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len", "", false);
-  seg($("fSort"), [["best", "Best"], ["short", "Short"], ["new", "New"], ["az", "A-Z"]], "sort", "", false);
-  $("openF").dataset.on = st.len || st.sort !== "best" ? "1" : "0";
+function secHTML(key, title, body) {
+  return `<details class="fsec" data-sec="${key}" ${st.open[key] ? "open" : ""}><summary>${title}<svg><use href="#i-chev"/></svg></summary><div class="flist">${body}</div></details>`;
+}
+function renderPanel() {
+  const f = st.fac, act = activeCount(), el = $("sheet"), a = document.activeElement, focus = a && a.dataset && a.dataset.f ? a.dataset.f + ":" + a.value : "";
+  const topics = [...TOPICS.map((t) => t[0]), "other"].filter((id) => (f.topics[id] || 0) > 0 || st.topics.has(id) || st.all.some((x) => x._t.includes(id)));
+  el.innerHTML = `
+    <div class="fp-head"><h2>Filters${act ? `<small>${act} applied</small>` : ""}</h2><button class="linkbtn" data-clear ${isFiltering() ? "" : "disabled"}>Clear all</button><button class="fp-close" id="closeF" aria-label="Close filters"><svg><use href="#i-x"/></svg></button></div>
+    <div class="fp-body">
+      ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], f.topics[id] || 0, "checkbox", st.topics.has(id))).join(""))}
+      ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], f.words[w] || 0, "checkbox", st.words.has(w))).join(""))}
+      ${secHTML("lens", "Length", [6, 9, 12, 13].map((k) => optHTML("lens", k, LABEL.lens[k], f.lens[k] || 0, "checkbox", st.lens.has(k))).join(""))}
+      ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
+    </div>
+    <div class="fp-foot"><p class="fp-note"><b>${n0(st.cur.length)}</b> of ${n0(st.all.length)} names</p><button class="apply" id="applyF">Show ${n0(st.cur.length)} names</button></div>`;
+  if (focus) { const [ff, vv] = focus.split(":"); const t = el.querySelector(`[data-f="${ff}"][value="${vv}"]`); if (t) t.focus({ preventScroll: true }); }
+  $("cTopic").innerHTML = topics.map((id) => `<button class="chip" data-quick="${id}" aria-pressed="${st.topics.has(id)}">${esc(TOPIC_NAME[id])} <small>${n0(f.topics[id] || 0)}</small></button>`).join("");
+  const nb = $("nb"); nb.hidden = !act; nb.textContent = act;
+}
+function renderApplied() {
+  const chips = [];
+  for (const id of st.topics) chips.push(["topics", id, TOPIC_NAME[id]]);
+  for (const w of st.words) chips.push(["words", w, LABEL.words[w]]);
+  for (const k of st.lens) chips.push(["lens", k, LABEL.lens[k]]);
+  if (st.q.trim()) chips.push(["q", "", "“" + st.q.trim() + "”"]);
+  const el = $("applied"); el.hidden = !chips.length;
+  el.innerHTML = chips.map(([f, v, l]) => `<span class="ap">${esc(l)}<button data-rm="${f}" data-v="${v}" aria-label="Remove ${esc(l)}"><svg><use href="#i-x"/></svg></button></span>`).join("") + (chips.length ? '<button class="linkbtn" data-clear>Clear all</button>' : "");
 }
 const sheet = (open) => document.body.classList.toggle("sheet-open", open);
+const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
+function clearAll() { st.topics.clear(); st.words.clear(); st.lens.clear(); st.q = ""; $("q").value = ""; st.sort = "best"; }
 
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
@@ -460,13 +516,20 @@ document.addEventListener("click", (e) => {
     if (st.tab === "saved") renderSaved();
   }
   else if (t.dataset.tab) go(t.dataset.tab);
-  else if (t.dataset.k) { const k = t.dataset.k, v = k === "sort" || k === "topic" ? t.dataset.v : +t.dataset.v; st[k] = st[k] === v && k !== "sort" ? (k === "topic" ? "" : 0) : v; scrollTo(0, 0); renderDiscover(); }
+  else if (t.hasAttribute("data-clear")) { clearAll(); scrollTo(0, 0); renderDiscover(); }
+  else if (t.dataset.rm) { const f = t.dataset.rm; if (f === "q") { st.q = ""; $("q").value = ""; } else toggle(st[f], f === "topics" ? t.dataset.v : +t.dataset.v); scrollTo(0, 0); renderDiscover(); }
+  else if (t.dataset.quick) { toggle(st.topics, t.dataset.quick); scrollTo(0, 0); renderDiscover(); }
   else if (t.id === "openF") sheet(true);
   else if (t.id === "closeF" || t.id === "applyF") sheet(false);
   else if (t.id === "toTop") scrollTo({ top: 0, behavior: "smooth" });
 });
+$("sheet").addEventListener("change", (e) => {
+  const i = e.target; if (!i.dataset.f) return;
+  if (i.dataset.f === "sort") st.sort = i.value; else toggle(st[i.dataset.f], i.dataset.f === "topics" ? i.value : +i.value);
+  scrollTo(0, 0); renderDiscover();
+});
+$("sheet").addEventListener("toggle", (e) => { if (e.target.dataset && e.target.dataset.sec) st.open[e.target.dataset.sec] = e.target.open; }, true);
 $("scrim").onclick = () => sheet(false);
-["cTopic", "fTopic"].forEach((id) => $(id).addEventListener("change", (e) => { st.topic = e.target.value; scrollTo(0, 0); renderDiscover(); }));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
 $("q").addEventListener("input", (e) => { st.q = e.target.value; renderDiscover(); });
 new IntersectionObserver((e) => { if (e[0].isIntersecting) fill(); }, { rootMargin: "900px" }).observe($("sentinel"));
@@ -488,7 +551,6 @@ function renderActivity(d) {
 /* data */
 const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 (async () => {
-  drawFilters();
   try {
     const res = await Promise.all(TAGS.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
     const seen = new Set(), types = {}, hist = {}; let scanned = 0, runs = 0, upd = "";
@@ -500,7 +562,6 @@ const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((
       types[k] = { s: s.scanned || 0, f: fd.length };
       for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
     });
-    for (const x of st.all) { const w = wordsOf(x); st.counts.w[w] = (st.counts.w[w] || 0) + 1; for (const t of x._t) st.counts.t[t] = (st.counts.t[t] || 0) + 1; }
     st.scanned = scanned; st.upd = upd;
     $("strip").innerHTML = `<b>${n0(scanned)}</b> names scanned &middot; <b>${n0(st.all.length)}</b> available &middot; updated ${ago(upd)}`;
     $("updTop").textContent = "Updated " + ago(upd);
