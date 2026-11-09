@@ -104,27 +104,30 @@ async function loadModels() {
   return RANKED;
 }
 
+// User ki di hui live NVIDIA models: text-naming ke liye theek pehle, baaki (vision/guard/translate/etc) aakhir mein
+const PREFER = ["nvidia/nemotron-3.5-bolt", "nvidia/nemotron-3-nano-omni", "z.ai/glm-5-3-flash", "meta/muse-glimmer-30b", "google/gemma-4-31b-it", "deepseek-ai/deepseek-v4.1-flash"];
+const ODD = ["nvidia/riva-translate-4b-instruct-v2", "nvidia/ising-calibration-1.5-31b", "nvidia/cosmos3-nano-reasoner", "nvidia/kumo-relational01", "meta/llama-3.2-90b-vision-instruct", "meta/llama-guard-4-12b"];
 let round = 0;
 async function aiBatch() {
   if (!KEY || Date.now() > deadline - 5 * 60000) return [];
   const [cat, desc] = THEMES[(stats.runs + round++) % THEMES.length];
   const avoid = [...aiSeen].slice(-150).join(", ") || "none";
   const prompt = `You are a brand naming expert. Product: ${PRODUCT}.
-Give 80 brand-name candidates for a .com domain. Style: ${desc}.
+Give 50 brand-name candidates for a .com domain. Style: ${desc}.
 Rules: lowercase a-z only, ${LEN ? "EXACTLY " + LEN : "5 to 8"} letters, no digits or hyphens, easy to say and spell in English, real-brand feel (like Zapier, Groq, Hulu, Canva).
 Each name must be a real English word, two real English words joined, or an obvious English word with a tiny spelling twist. NEVER random letter strings, NEVER Russian/Slavic/Hindi-sounding names, no -ov/-ova/-ski/-ino/-ora endings.
 Do NOT repeat: ${avoid}
 Reply with ONLY a JSON array of strings.`;
   const list = await loadModels();
-  const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...list, process.env.NVIDIA_MODEL].filter(Boolean))].filter((m) => !(stats.bad || []).includes(m) && ((stats.slow || {})[m] || 0) < 2);
+  const tryModels = [...new Set([process.env.FORCE_MODEL && process.env.NVIDIA_MODEL, stats.goodModel, ...PREFER, ...list, ...ODD, process.env.NVIDIA_MODEL].filter(Boolean))].filter((m) => !(stats.bad || []).includes(m) && ((stats.slow || {})[m] || 0) < 2);
   let slowFails = 0;
   for (const model of tryModels) {
-    if (slowFails >= 3) break; // 3 slow/timeout ke baad is round ko chhod do
+    if (slowFails >= 4) break; // 4 slow/timeout ke baad is round ko chhod do
     try {
       const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST", headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, temperature: 1.0, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
-        signal: AbortSignal.timeout(60000),
+        body: JSON.stringify({ model, temperature: 1.0, max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
+        signal: AbortSignal.timeout(100000),
       });
       if (!res.ok) { if ([400, 403, 404, 410, 422].includes(res.status)) { (stats.bad ||= []).push(model); console.log("Model chalta nahi, skip:", model, res.status); continue; } throw new Error("HTTP " + res.status); }
       const j = await res.json(); const ch = j.choices?.[0]?.message;
