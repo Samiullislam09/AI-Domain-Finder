@@ -1,15 +1,15 @@
 {
- "scanned": 5074,
- "free": 4769,
- "runs": 1,
- "cursor": 5160,
- "aiOk": 0,
- "aiFail": 3,
- "updated": "2026-11-09T10:49:03.842Z",
+ "scanned": 11022,
+ "free": 6831,
+ "runs": 2,
+ "cursor": 59360,
+ "aiOk": 8,
+ "aiFail": 6,
+ "updated": "2026-11-09T17:05:48.908Z",
  "history": {
   "2026-11-09": {
-   "s": 5074,
-   "f": 4769
+   "s": 11022,
+   "f": 6831
   }
  },
  "len": "12-14",
@@ -42,9 +42,10 @@
   "deepseek-ai/deepseek-v4.1-flash": 2,
   "mistralai/mistral-large-4-1t-a52b": 2,
   "nvidia/nemotron-3.5-lightning-30b-a3b": 1,
-  "google/diffusiongemma-26b-a4b-it": 1,
-  "nvidia/ising-calibration-1.5-31b": 1,
-  "meta/llama-3.2-90b-vision-instruct": 1
+  "nvidia/ising-calibration-1.5-31b": 2,
+  "meta/llama-3.2-90b-vision-instruct": 2,
+  "nvidia/nemotron-3-ultra-550b-a55b": 2
  },
- "model": "nvidia/nemotron-3-ultra-550b-a55b"
+ "model": "google/diffusiongemma-26b-a4b-it",
+ "goodModel": "google/diffusiongemma-26b-a4b-it"
 }
