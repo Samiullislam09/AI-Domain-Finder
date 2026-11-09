@@ -1,20 +1,20 @@
 {
- "scanned": 56783,
+ "scanned": 115440,
  "free": 0,
- "runs": 3,
- "cursor": 56800,
- "aiOk": 16,
- "aiFail": 2,
- "updated": "2026-11-09T17:05:47.660Z",
+ "runs": 4,
+ "cursor": 115480,
+ "aiOk": 25,
+ "aiFail": 3,
+ "updated": "2026-11-09T17:26:40.777Z",
  "history": {
   "2026-11-09": {
-   "s": 56783,
+   "s": 115440,
    "f": 0
   }
  },
  "len": "5-7",
  "words": 2,
- "model": "google/diffusiongemma-26b-a4b-it",
+ "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
  "bad": [
   "nvidia/nemotron-3.5-bolt",
   "nvidia/nemotron-3-nano-omni",
@@ -42,9 +42,10 @@
   "google/gemma-4-31b-it": 2,
   "deepseek-ai/deepseek-v4.1-flash": 2,
   "mistralai/mistral-large-4-1t-a52b": 2,
-  "nvidia/ising-calibration-1.5-31b": 1,
-  "meta/llama-3.2-90b-vision-instruct": 1,
-  "nvidia/nemotron-3.5-lightning-30b-a3b": 1
+  "nvidia/ising-calibration-1.5-31b": 2,
+  "meta/llama-3.2-90b-vision-instruct": 2,
+  "google/diffusiongemma-26b-a4b-it": 1,
+  "nvidia/nemotron-3-ultra-550b-a55b": 1
  },
- "goodModel": "google/diffusiongemma-26b-a4b-it"
+ "goodModel": "nvidia/nemotron-3.5-lightning-30b-a3b"
 }
