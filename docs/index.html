@@ -127,6 +127,30 @@
   .sk{min-height:96px;display:flex;flex-direction:column;justify-content:center;gap:10px}
   .sk i{display:block;height:12px;border-radius:6px;background:var(--line);width:55%}
   .sk i+i{width:35%;height:10px}
+  /* home */
+  .hero{padding:12px 0 0}
+  .hero h1{font-size:28px;line-height:1.15;margin:8px 0 10px;letter-spacing:-.02em;max-width:18ch}
+  .hero p{margin:0;color:var(--mut);font-size:15px;max-width:60ch}
+  .herosearch{display:flex;gap:8px;margin:20px 0 0;max-width:640px}
+  .cta{height:44px;padding:0 20px;border-radius:12px;background:var(--brand);color:var(--brand-ink);font-weight:600;transition:background .15s var(--ease)}
+  .cta:hover,.cta:active{background:var(--brand-press)}
+  .rowbtns{display:flex;align-items:center;gap:4px}
+  .steps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px}
+  .step b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--tint);color:var(--brand);font-size:14px;margin-bottom:10px}
+  .step h3,.note h3{margin:0 0 4px;font-size:15px}
+  .step p,.note p{margin:0;color:var(--mut);font-size:14px}
+  .note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px}
+  /* live check + bought */
+  .cn{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--tint);color:var(--brand);font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  .tabs button[aria-current="page"] .cn{background:var(--surface)}
+  nav.bottom button{position:relative}
+  nav.bottom .cn{position:absolute;top:3px;left:calc(50% + 6px);min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
+  .tk{background:var(--press);color:var(--mut);font-size:11.5px;font-weight:600;line-height:1;padding:3px 7px;border-radius:5px}
+  .gone{flex:none;color:var(--mut);font-size:13px;font-weight:600;padding:0 8px}
+  .gone-card .name{opacity:.6}
+  .vf{color:var(--ok);font-weight:600}
+  .vf:empty{display:none}
   /* activity */
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
   .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px}
@@ -219,7 +243,8 @@
     .tabs,.upd{display:flex}
     .topbar-in{max-width:none;height:64px;padding:0 24px;gap:32px}
     .wrap{max-width:none;padding:0}
-    #t-saved,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
+    #t-home,#t-saved,#t-bought,#t-activity{max-width:1320px;margin:0 auto;padding:28px 24px 0}
+    .hero h1{font-size:40px}
     .content{padding:20px 12px 0 12px}
     .head h1{font-size:30px;margin-top:0}
     .head p{font-size:15px}
@@ -247,24 +272,60 @@
   <symbol id="i-filter" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.2-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
 
 <header class="topbar"><div class="topbar-in">
-  <a class="brand" href="./" aria-label="Domain Miner home">
+  <a class="brand" href="./" data-tab="home" aria-label="Domain Miner home">
     <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--brand)"/><circle cx="14" cy="14" r="5.5" fill="none" stroke="#fff" stroke-width="2.2"/><path d="m18.2 18.2 5.3 5.3" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
     Domain Miner
   </a>
   <nav class="tabs" aria-label="Primary">
+    <button data-tab="home"><svg class="sm"><use href="#i-home"/></svg>Home</button>
     <button data-tab="discover" aria-current="page"><svg class="sm"><use href="#i-compass"/></svg>Discover</button>
     <button data-tab="saved"><svg class="sm"><use href="#i-bookmark"/></svg>Saved</button>
+    <button data-tab="bought"><svg class="sm"><use href="#i-bag"/></svg>Bought<span class="cn" data-bn>0</span></button>
     <button data-tab="activity"><svg class="sm"><use href="#i-activity"/></svg>Activity</button>
   </nav>
   <span class="upd" id="updTop"></span>
 </div></header>
 
 <main class="wrap">
+
+  <!-- HOME -->
+  <section class="tab" id="t-home" hidden>
+    <header class="hero">
+      <h1>Find a .com name that is actually available</h1>
+      <p>Domain Miner creates name ideas all day, checks each one against the .com registry, and keeps only the clean English-word names that are still unregistered.</p>
+      <form class="herosearch" id="heroForm">
+        <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="heroQ" type="search" placeholder="Search a word, like sun, pilot or leaf" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
+        <button class="cta" type="submit">Search</button>
+      </form>
+      <p class="statline" id="homeStat"></p>
+    </header>
+
+    <section class="sec">
+      <div class="sec-h row"><h2>Top picks</h2><span class="rowbtns"><button class="linkbtn shuf" data-shuffle><svg class="sm"><use href="#i-shuffle"/></svg>Shuffle</button><button class="linkbtn" data-tab="discover">View all</button></span></div>
+      <p class="sec-sub">A fresh set of the best names every time you visit.</p>
+      <div class="grid" id="homeTop"></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h2>How it works</h2></div>
+      <div class="steps">
+        <div class="step"><b>1</b><h3>Ideas are generated</h3><p>AI and word lists create thousands of possible names from simple English words.</p></div>
+        <div class="step"><b>2</b><h3>Each name is checked</h3><p>Every idea is looked up in the official .com registry. Registered names are dropped.</p></div>
+        <div class="step"><b>3</b><h3>The best ones are ranked</h3><p>Names made of real, easy words rise to the top. Odd or random-looking names stay at the bottom.</p></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="note"><h3>Names can be taken at any time</h3><p>A name is available at the moment it was checked. Someone else can register it later, so always confirm on a registrar before you decide. The Buy button checks live.</p></div>
+    </section>
+  </section>
 
   <!-- DISCOVER -->
   <section class="tab" id="t-discover">
@@ -308,6 +369,12 @@
     <section class="sec"><div class="grid" id="saved"></div></section>
   </section>
 
+  <!-- BOUGHT -->
+  <section class="tab" id="t-bought" hidden>
+    <header class="head"><h1>Bought</h1><p id="boughtSub">Names from our list that someone else has registered.</p></header>
+    <section class="sec"><div class="grid" id="bought"></div></section>
+  </section>
+
   <!-- ACTIVITY -->
   <section class="tab" id="t-activity" hidden>
     <header class="head"><h1>Activity</h1><p>What the miner has checked so far.</p></header>
@@ -325,7 +392,7 @@
     </div>
     <div>
       <h4>Explore</h4>
-      <div class="flinks"><button data-tab="discover">Discover</button><button data-tab="saved">Saved</button><button data-tab="activity">Activity</button></div>
+      <div class="flinks"><button data-tab="home">Home</button><button data-tab="discover">Discover</button><button data-tab="saved">Saved</button><button data-tab="bought">Bought</button><button data-tab="activity">Activity</button></div>
     </div>
     <div>
       <h4>Before you buy</h4>
@@ -336,8 +403,10 @@
 </footer>
 
 <nav class="bottom" aria-label="Primary">
+  <button data-tab="home"><svg><use href="#i-home"/></svg>Home</button>
   <button data-tab="discover" aria-current="page"><svg><use href="#i-compass"/></svg>Discover</button>
   <button data-tab="saved"><svg><use href="#i-bookmark"/></svg>Saved</button>
+  <button data-tab="bought"><svg><use href="#i-bag"/></svg>Bought<span class="cn" data-bn>0</span></button>
   <button data-tab="activity"><svg><use href="#i-activity"/></svg>Activity</button>
 </nav>
 
@@ -369,6 +438,9 @@ const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["oth
 const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
+const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+st.vf = LS.get("dm.vf", {});          // live-check results saved on this device: name -> { s: "free"|"taken", t: time }
+st.bought = LS.get("dm.bought", {});  // names that were available when found but have since been registered
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
@@ -389,19 +461,76 @@ function nameHTML(x) { // words are shown in alternating colour so long names re
   if (parts.length > 1 && parts.join("") === x.n) return parts.map((w, i) => (i % 2 ? `<span class="p1">${w}</span>` : w)).join("");
   return x.n;
 }
+/* ---------- live availability check: browser -> Verisign RDAP (CORS enabled). Every visible name is verified once per 20 minutes. ---------- */
+const VF_TTL = 20 * 60000, checking = new Set(), vq = [];
+let vActive = 0, vOk = 0, vFail = 0, vTimer = 0;
+const boughtCount = () => Object.keys(st.bought).length;
+const heading = () => (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " · loading full list" : "");
+function vfText(n) { const r = st.vf[n]; return checking.has(n) ? "checking…" : r && r.s === "free" && Date.now() - r.t < VF_TTL ? "live checked" : ""; }
+function setVf(n) { const t = vfText(n); document.querySelectorAll(`[data-vf="${n}"]`).forEach((e) => { e.textContent = t; }); }
+function saveVf() {
+  clearTimeout(vTimer);
+  vTimer = setTimeout(() => { const now = Date.now(), keep = {}; Object.entries(st.vf).filter(([, r]) => now - r.t < VF_TTL * 6).slice(-1500).forEach(([k, r]) => { keep[k] = r; }); st.vf = keep; LS.set("dm.vf", keep); }, 800);
+}
+function verifyNames(names) {
+  if (st.vOff) return;
+  for (const n of names) {
+    const r = st.vf[n];
+    if ((r && Date.now() - r.t < VF_TTL) || checking.has(n) || st.bought[n]) { setVf(n); continue; }
+    checking.add(n); vq.push(n); setVf(n);
+  }
+  pump();
+}
+const verifyDom = (root) => { if (root) verifyNames(Array.from(root.querySelectorAll("[data-vf]")).map((e) => e.dataset.vf).slice(0, 80)); };
+async function rdap(n) {
+  try { const r = await fetch(`https://rdap.verisign.com/com/v1/domain/${n}.com`, { headers: { Accept: "application/rdap+json" }, signal: AbortSignal.timeout(9000) }); return r.status === 404 ? "free" : r.status === 200 ? "taken" : null; } catch { return null; }
+}
+function pump() {
+  while (vActive < 3 && vq.length && !st.vOff) {
+    const n = vq.shift(); vActive++;
+    rdap(n).then((res) => {
+      vActive--; checking.delete(n);
+      if (res) { vOk++; st.vf[n] = { s: res, t: Date.now() }; saveVf(); if (res === "taken") markBought(n); else setVf(n); }
+      else { vFail++; setVf(n); if (vFail >= 12 && !vOk) st.vOff = true; } // registry blocked for this browser: stop trying
+      setTimeout(pump, 150);
+    });
+  }
+}
+function applyBought() { const b = st.bought; if (!boughtCount()) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
+function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
+function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; $("homeStat").innerHTML = h; }
+function refreshTops() {
+  if (st.tab === "home") renderHome();
+  else if (st.tab === "discover" && !$("topSec").hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.map(cardHTML).join(""); verifyDom($("top")); }
+}
+function markBought(n) { // someone registered it: remove from every list, count it under "Bought"
+  if (st.bought[n]) return;
+  const x = st.all.find((y) => y.n === n) || st.topPre.find((y) => y.n === n); if (!x) return;
+  st.bought[n] = { n: x.n, cat: x.cat, s: x.s, t: x.t, m: x.m, p: x.p, q: x.q, bt: new Date().toISOString() };
+  LS.set("dm.bought", st.bought);
+  const drop = (a) => a.filter((y) => y.n !== n);
+  st.all = drop(st.all); st.topPre = drop(st.topPre); st.cur = drop(st.cur); st.shown = Math.min(st.shown, st.cur.length);
+  st.free = Math.max(0, st.free - 1);
+  document.querySelectorAll(`#list [data-card="${n}"], #top [data-card="${n}"], #homeTop [data-card="${n}"]`).forEach((e) => e.remove());
+  updateBought(); updateStrip(); toast(n + ".com was just registered by someone else");
+  if (st.tab === "discover") { computeFacets(); renderPanel(); $("allH").textContent = heading(); }
+  refreshTops();
+  if (st.tab === "saved") renderSaved();
+  if (st.tab === "bought") renderBought();
+}
 function cardHTML(x) {
-  const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") ? x.m : "";
-  const meta = [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
-  return `<article class="card">
+  const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") ? x.m : "", gone = !!x.taken;
+  const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
+  return `<article class="card${gone ? " gone-card" : ""}" data-card="${x.n}">
     <div class="c-main">
       <div class="c-top">
         <button class="name${x.n.length > 15 ? " long" : ""}" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${nameHTML(x)}<span class="tld">.com</span></button>
         <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
       </div>
       ${mean ? `<p class="c-meaning">${esc(mean)}</p>` : ""}
-      <p class="meta"><span class="ok">Available</span><span>${esc(meta)}</span></p>
+      <p class="meta">${gone ? '<span class="tk">Taken</span>' : '<span class="ok">Available</span>'}<span>${esc(meta)}</span>${gone ? "" : `<span class="vf" data-vf="${x.n}">${vfText(x.n)}</span>`}</p>
     </div>
-    <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg><use href="#i-arrow"/></svg></a>
+    ${gone ? '<span class="gone">Registered</span>' : `<a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg><use href="#i-arrow"/></svg></a>`}
   </article>`;
 }
 const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search"/></svg><b>${title}</b>${text}</div>`;
@@ -453,6 +582,7 @@ function appendMore() {
   if (st.shown >= st.cur.length) return;
   const next = st.cur.slice(st.shown, st.shown + 36); st.shown += next.length;
   $("list").insertAdjacentHTML("beforeend", next.map(cardHTML).join(""));
+  verifyNames(next.map((x) => x.n));
   $("end").hidden = st.partial || st.shown < st.cur.length || st.cur.length < 36;
 }
 function fill() { let g = 0; while (st.tab === "discover" && st.shown < st.cur.length && $("sentinel").getBoundingClientRect().top < innerHeight + 900 && g++ < 80) appendMore(); }
@@ -483,21 +613,34 @@ function renderDiscover() {
   computeFacets(); renderPanel(); renderApplied();
   const topSec = $("topSec"); topSec.hidden = !!isFiltering();
   if (!topSec.hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
-  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " \u00b7 loading full list" : "");
+  verifyDom($("top")); // top picks are checked first
+  $("allH").textContent = heading();
   if (st.partial) { $("list").innerHTML = '<div class="card sk"><i></i><i></i></div>'.repeat(8); return; } // full list is still loading
   if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
   fill();
 }
 function renderSaved() {
-  const r = st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a));
+  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(st.bought).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
   $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
   $("saved").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark on a name to keep it here.");
+  verifyDom($("saved"));
 }
-const render = () => (st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : 0);
+function renderBought() {
+  const r = Object.values(st.bought).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
+  $("boughtSub").textContent = r.length ? n0(r.length) + (r.length === 1 ? " name was" : " names were") + " available when we found them and have since been registered." : "Names from our list that someone else has registered.";
+  $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Names are checked live while you browse.");
+}
+function renderHome() {
+  updateStrip();
+  const t = st.topPre.length ? topPicks().slice(0, 6) : st.all.length ? topPicksLegacy().slice(0, 6) : [];
+  $("homeTop").innerHTML = t.length ? t.map(cardHTML).join("") : '<div class="card sk"><i></i><i></i></div>'.repeat(6);
+  verifyDom($("homeTop"));
+}
+const render = () => (st.tab === "home" ? renderHome() : st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : st.tab === "bought" ? renderBought() : 0);
 
 function go(tab) {
   st.tab = tab;
-  for (const t of ["discover", "saved", "activity"]) $("t-" + t).hidden = t !== tab;
+  for (const t of ["home", "discover", "saved", "bought", "activity"]) $("t-" + t).hidden = t !== tab;
   document.querySelectorAll("[data-tab]").forEach((b) => { if (b.closest(".flinks")) return; if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   scrollTo(0, 0); render();
 }
@@ -553,8 +696,8 @@ document.addEventListener("click", (e) => {
     document.querySelectorAll(`[data-save="${n}"]`).forEach((b) => b.setAttribute("aria-pressed", st.favs.has(n)));
     if (st.tab === "saved") renderSaved();
   }
-  else if (t.dataset.tab) go(t.dataset.tab);
-  else if (t.hasAttribute("data-shuffle")) { SEED = (Math.random() * 4294967296) >>> 0; st.all.forEach((x) => { x._h = undefined; }); st.topPre.forEach((x) => { x._h = undefined; }); renderDiscover(); }
+  else if (t.dataset.tab) { e.preventDefault(); go(t.dataset.tab); }
+  else if (t.hasAttribute("data-shuffle")) { SEED = (Math.random() * 4294967296) >>> 0; st.all.forEach((x) => { x._h = undefined; }); st.topPre.forEach((x) => { x._h = undefined; }); render(); }
   else if (t.hasAttribute("data-clear")) { clearAll(); scrollTo(0, 0); renderDiscover(); }
   else if (t.dataset.rm) { const f = t.dataset.rm; if (f === "q") { st.q = ""; $("q").value = ""; } else toggle(st[f], f === "topics" ? t.dataset.v : +t.dataset.v); scrollTo(0, 0); renderDiscover(); }
   else if (t.dataset.quick) { toggle(st.topics, t.dataset.quick); scrollTo(0, 0); renderDiscover(); }
@@ -569,6 +712,7 @@ $("sheet").addEventListener("change", (e) => {
 });
 $("sheet").addEventListener("toggle", (e) => { if (e.target.dataset && e.target.dataset.sec) st.open[e.target.dataset.sec] = e.target.open; }, true);
 $("scrim").onclick = () => sheet(false);
+$("heroForm").addEventListener("submit", (e) => { e.preventDefault(); st.q = $("heroQ").value.trim(); $("q").value = st.q; go("discover"); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
 $("q").addEventListener("input", (e) => { st.q = e.target.value; renderDiscover(); });
 new IntersectionObserver((e) => { if (e[0].isIntersecting) fill(); }, { rootMargin: "900px" }).observe($("sentinel"));
@@ -597,13 +741,15 @@ const idb = {
 };
 const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 function applySummary(d) {
-  st.scanned = d.scanned; st.upd = d.updated; st.free = d.free;
-  const pl = d.topPool || d.top; if (pl && d.cats) st.topPre = pl.map((t) => fromTuple(t, d.cats)); // top picks come from one place (the index builder)
-  $("strip").innerHTML = `<b>${n0(d.scanned)}</b> names scanned &middot; <b>${n0(d.free)}</b> available &middot; updated ${ago(d.updated)}`;
+  st.scanned = d.scanned; st.upd = d.updated; st.free = Math.max(0, d.free - boughtCount());
+  const pl = d.topPool || d.top; if (pl && d.cats) { st.topPre = pl.map((t) => fromTuple(t, d.cats)); applyBought(); } // top picks come from one place (the index builder)
   $("updTop").textContent = "Updated " + ago(d.updated);
-  renderActivity({ free: d.free, scanned: d.scanned, runs: d.runs, updated: d.updated, types: d.types, hist: d.hist });
+  updateStrip();
+  renderActivity({ free: st.free, scanned: d.scanned, runs: d.runs, updated: d.updated, types: d.types, hist: d.hist });
+  if (st.tab === "home") renderHome();
 }
-const setAll = (all) => { st.all = all.items.map((t) => fromTuple(t, all.cats)); st.partial = false; };
+const setAll = (all) => { st.all = all.items.map((t) => fromTuple(t, all.cats)); st.partial = false; applyBought(); };
+updateBought();
 
 async function legacyLoad() { // old way: many small files (used only if summary.json / all.json are missing)
   const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
@@ -619,7 +765,7 @@ async function legacyLoad() { // old way: many small files (used only if summary
       types[k] = { s: s.scanned || 0, f: fd.length };
       for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
     });
-    st.partial = false; applySummary({ free: st.all.length, scanned, runs, updated: upd, types, hist }); render();
+    st.partial = false; const total = st.all.length; applyBought(); applySummary({ free: total, scanned, runs, updated: upd, types, hist }); render();
   } catch (e) {
     $("strip").innerHTML = "";
     $("list").innerHTML = emptyHTML("Data did not load", "Check your connection and reload the page."); $("topSec").hidden = true;
