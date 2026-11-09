@@ -34,7 +34,7 @@ const CONC = +(process.env.CONC || 20);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const readJson = (f, d) => { try { return JSON.parse(readFileSync(f, "utf8")); } catch { return d; } };
 
-const found = readJson(F_FOUND, []);
+const found = readJson(F_FOUND, []).filter((x) => !/^(Generated|Phonetic)/.test(x.cat || "")); // purane random/syllable naam hata do
 const stats = Object.assign({ scanned: 0, free: found.length, runs: 0, cursor: 0, aiOk: 0, aiFail: 0, updated: "", history: {} }, readJson(F_STATS, {}));
 stats.len = LMIN ? `${LMIN}-${LMAX}` : "mix"; stats.words = W || "any";
 stats.runs++;

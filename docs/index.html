@@ -7,14 +7,16 @@
 <title>Domain Miner</title>
 <style>
   :root{
-    --bg:#f4f5f8; --surface:#fff; --ink:#14161c; --mut:#626878; --line:#e4e6ee;
-    --accent:#14161c; --on-accent:#fff; --press:#eceef3;
+    --bg:#f4f5f8; --surface:#fff; --ink:#14161c; --mut:#626878; --line:#e4e6ee; --press:#eceef3;
+    --brand:#673de6; --brand-press:#5025d1; --brand-ink:#fff; --tint:#ebe4ff;
+    --ok:#008361; --ok-ink:#fff;
     --r-surface:16px; --r-inner:8px; --r-sheet:24px;
     --ease:cubic-bezier(.2,.7,.2,1);
   }
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --bg:#0f1115; --surface:#171a20; --ink:#edeff4; --mut:#9aa1b1; --line:#272b34;
-    --accent:#edeff4; --on-accent:#0f1115; --press:#20242c;
+    --bg:#0f1115; --surface:#171a20; --ink:#edeff4; --mut:#9aa1b1; --line:#272b34; --press:#20242c;
+    --brand:#8c6cff; --brand-press:#a18aff; --brand-ink:#0f1115; --tint:#2a2250;
+    --ok:#1fa57f; --ok-ink:#fff;
   }}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{background:var(--bg)}
@@ -24,28 +26,34 @@
   button{background:none;border:0;padding:0;cursor:pointer}
   svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
   svg.sm{width:16px;height:16px}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-inner)}
-
-  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 0}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:var(--r-inner)}
   .tab[hidden]{display:none}
 
-  /* header */
+  .topbar{display:none}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 0}
   .head h1{font-size:22px;line-height:1.2;margin:8px 0 4px;letter-spacing:-.01em}
   .head p{margin:0;color:var(--mut);font-size:14px}
 
-  /* search row */
+  /* search */
   .tools{display:flex;gap:8px;margin:16px 0 0}
-  .field{flex:1;display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--mut)}
+  .field{flex:1;display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--mut);transition:border-color .15s var(--ease)}
   .field input{flex:1;min-width:0;border:0;background:none;outline:0;font-size:16px;color:var(--ink)}
-  .field:focus-within{border-color:var(--ink)}
+  .field:focus-within{border-color:var(--brand)}
   .iconbtn{width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;transition:background .15s var(--ease)}
   .iconbtn:active{background:var(--press)}
-  .iconbtn[data-on="1"]{border-color:var(--ink)}
+  .iconbtn[data-on="1"]{border-color:var(--brand);color:var(--brand)}
+
+  /* category chips (visible on mobile) */
+  .chips{display:flex;gap:8px;overflow-x:auto;margin:12px -16px 0;padding:0 16px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip,.seg button{height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;flex:none;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface);font-weight:550;font-size:14px;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+  .chip small,.seg button small{color:var(--mut);font-size:12px;font-weight:500}
+  .chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--tint);border-color:var(--brand);color:var(--brand)}
+  .chip[aria-pressed="true"] small,.seg button[aria-pressed="true"] small{color:var(--brand)}
 
   /* sections: one surface each, items split by 1px dividers */
   .sec{margin-top:24px}
-  .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 4px}
-  .sec-h h2{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0}
+  .sec-h h2{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px}
   .sec-sub{color:var(--mut);font-size:13px;margin:0 0 12px}
   .surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);overflow:hidden}
   .row{display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;border-top:1px solid var(--line)}
@@ -53,20 +61,22 @@
   .info{flex:1;min-width:0}
   .name{display:block;max-width:100%;text-align:left;font-size:18px;font-weight:650;letter-spacing:-.005em;overflow-wrap:anywhere;line-height:1.25;border-radius:var(--r-inner);transition:opacity .15s var(--ease)}
   .name:active{opacity:.55}
-  .name span{color:var(--mut);font-weight:500}
-  .meta{margin:2px 0 0;color:var(--mut);font-size:13px}
+  .name span{color:var(--mut);font-weight:500;white-space:nowrap}
+  .name.long{font-size:16px}
+  .meta{margin:4px 0 0;color:var(--mut);font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+  .ok{background:var(--ok);color:var(--ok-ink);font-size:12px;font-weight:600;line-height:1;padding:4px 8px;border-radius:6px}
   .acts{display:flex;align-items:center;gap:4px}
   .save{width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
   .save:active{background:var(--press)}
-  .save[aria-pressed="true"]{color:var(--ink)}
+  .save[aria-pressed="true"]{color:var(--brand)}
   .save[aria-pressed="true"] svg{fill:currentColor}
-  .buy{height:40px;padding:0 12px;display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:var(--on-accent);border-radius:var(--r-inner);font-weight:600;font-size:14px;text-decoration:none;transition:opacity .15s var(--ease)}
-  .buy:active{opacity:.8}
-  .more{display:block;width:100%;height:48px;margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-weight:600;transition:background .15s var(--ease)}
-  .more:active{background:var(--press)}
+  .buy{height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:4px;background:var(--brand);color:var(--brand-ink);border-radius:var(--r-inner);font-weight:600;font-size:14px;text-decoration:none;transition:background .15s var(--ease)}
+  .buy:hover,.buy:active{background:var(--brand-press)}
   .empty{padding:32px 24px;text-align:center;color:var(--mut)}
   .empty svg{width:24px;height:24px;margin-bottom:8px}
   .empty b{display:block;color:var(--ink);margin-bottom:4px}
+  #sentinel{height:1px}
+  .end{padding:16px 0 0;text-align:center;color:var(--mut);font-size:13px}
 
   /* activity */
   .kv{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
@@ -77,37 +87,69 @@
   .bar:first-child{border-top:0}
   .bar span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
   .bar i{grid-column:1/-1;display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
-  .bar i b{display:block;height:100%;background:var(--accent);border-radius:2px}
+  .bar i b{display:block;height:100%;background:var(--brand);border-radius:2px}
   .foot{margin:24px 0 0;color:var(--mut);font-size:12.5px}
 
-  /* bottom navigation */
-  nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:5}
-  nav button{flex:1;max-width:200px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--mut);border-radius:12px;transition:color .15s var(--ease),background .15s var(--ease)}
-  nav button[aria-current="page"]{color:var(--ink);background:var(--press)}
+  /* bottom navigation (mobile) */
+  nav.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:5}
+  nav.bottom button{flex:1;max-width:200px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--mut);border-radius:12px;transition:color .15s var(--ease),background .15s var(--ease)}
+  nav.bottom button[aria-current="page"]{color:var(--brand);background:var(--tint)}
 
-  /* filter sheet */
+  /* filters: bottom sheet on mobile, sticky sidebar on desktop */
   .scrim{position:fixed;inset:0;background:rgba(10,12,16,.45);opacity:0;pointer-events:none;transition:opacity .2s var(--ease);z-index:10}
-  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s var(--ease);z-index:11;visibility:hidden}
+  .filters{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s var(--ease);z-index:11;visibility:hidden}
   body.sheet-open .scrim{opacity:1;pointer-events:auto}
-  body.sheet-open .sheet{transform:none;visibility:visible}
-  .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  body.sheet-open .filters{transform:none;visibility:visible}
+  .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
   .sheet-h h2{font-size:17px;margin:0}
   .group{margin-top:16px}
   .group-l{font-size:13px;color:var(--mut);margin:0 0 8px}
   .seg{display:flex;flex-wrap:wrap;gap:8px}
-  .seg button{height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-inner);background:var(--surface);font-weight:550;transition:background .15s var(--ease),border-color .15s var(--ease)}
-  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-  .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 0}
+  .desk{display:none}
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 0}
   .switch span small{display:block;color:var(--mut);font-size:12.5px}
   .switch button{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;transition:background .2s var(--ease)}
   .switch button::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
-  .switch button[aria-pressed="true"]{background:var(--accent)}
-  .switch button[aria-pressed="true"]::after{transform:translateX(18px);background:var(--on-accent)}
-  .apply{display:block;width:100%;height:48px;margin-top:20px;background:var(--accent);color:var(--on-accent);border-radius:12px;font-weight:600}
+  .switch button[aria-pressed="true"]{background:var(--brand)}
+  .switch button[aria-pressed="true"]::after{transform:translateX(18px)}
+  .apply{display:block;width:100%;height:48px;margin-top:20px;background:var(--brand);color:var(--brand-ink);border-radius:12px;font-weight:600;transition:background .15s var(--ease)}
+  .apply:active{background:var(--brand-press)}
 
-  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--accent);color:var(--on-accent);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease);z-index:20}
+  /* floating */
+  .totop{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.08);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease),background .15s var(--ease);z-index:6}
+  .totop.on{opacity:1;transform:none;pointer-events:auto}
+  .totop:active{background:var(--press)}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease);z-index:20}
   .toast.on{opacity:1;transform:translate(-50%,0)}
 
+  /* desktop */
+  @media (min-width:900px){
+    body{padding-bottom:48px}
+    nav.bottom,.scrim,#openF,.sheet-h,.apply,.chips{display:none}
+    .desk{display:block}
+    .topbar{display:block;position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line)}
+    .topbar-in{max-width:1120px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:32px}
+    .brand{font-size:18px;font-weight:700;letter-spacing:-.01em}
+    .tabs{display:flex;gap:4px}
+    .tabs button{height:40px;padding:0 14px;display:flex;align-items:center;gap:8px;border-radius:var(--r-inner);font-weight:600;color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
+    .tabs button:hover{background:var(--press)}
+    .tabs button[aria-current="page"]{background:var(--tint);color:var(--brand)}
+    .wrap{max-width:1120px;padding:32px 24px 0}
+    .head h1{font-size:30px;margin-top:0}
+    .head p{font-size:15px}
+    .discover{display:grid;grid-template-columns:272px minmax(0,1fr);gap:32px;align-items:start}
+    .filters{position:sticky;top:88px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;transform:none;visibility:visible;transition:none;z-index:1;border:1px solid var(--line);border-radius:var(--r-surface);padding:8px 16px 16px;order:-1}
+    .filters .group:first-of-type{margin-top:8px}
+    .tools{margin-top:20px}
+    .row{padding:14px 12px 14px 20px}
+    .info{display:flex;align-items:baseline;gap:20px}
+    .name{flex:none;min-width:210px;font-size:19px}
+    .meta{margin:0}
+    .totop{bottom:24px;right:24px}
+    .toast{bottom:32px}
+    .chip:hover,.seg button:hover{background:var(--press)}
+    .save:hover{background:var(--press)}
+  }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -120,35 +162,61 @@
   <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
+
+<header class="topbar"><div class="topbar-in">
+  <span class="brand">Domain Miner</span>
+  <nav class="tabs" aria-label="Primary">
+    <button data-tab="discover" aria-current="page"><svg class="sm"><use href="#i-compass"/></svg>Discover</button>
+    <button data-tab="saved"><svg class="sm"><use href="#i-bookmark"/></svg>Saved</button>
+    <button data-tab="activity"><svg class="sm"><use href="#i-activity"/></svg>Activity</button>
+  </nav>
+</div></header>
 
 <main class="wrap">
 
   <!-- DISCOVER -->
   <section class="tab" id="t-discover">
-    <header class="head">
-      <h1>Domain Miner</h1>
-      <p id="sum">Loading available .com names...</p>
-    </header>
+    <div class="discover">
+      <aside class="filters" id="sheet" aria-label="Filters">
+        <div class="sheet-h"><h2>Sort and options</h2><button class="iconbtn" id="closeF" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
+        <div class="group desk"><p class="group-l">Category</p><div class="seg" id="fWords"></div></div>
+        <div class="group desk"><p class="group-l">Length</p><div class="seg" id="fLen"></div></div>
+        <div class="group"><p class="group-l">Sort by</p><div class="seg" id="fSort"></div></div>
+        <div class="switch"><span>Include old archive<small>Earlier syllable-style names, lower quality.</small></span><button id="fArch" aria-pressed="false" aria-label="Include old archive"></button></div>
+        <button class="apply" id="applyF">Show names</button>
+      </aside>
 
-    <div class="tools">
-      <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
-      <button class="iconbtn" id="openF" aria-label="Filters"><svg><use href="#i-filter"/></svg></button>
+      <div class="content">
+        <header class="head">
+          <h1>Available .com names</h1>
+          <p id="sum">Loading...</p>
+        </header>
+
+        <div class="tools">
+          <label class="field"><svg class="sm"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"></label>
+          <button class="iconbtn" id="openF" aria-label="Sort and options"><svg><use href="#i-filter"/></svg></button>
+        </div>
+        <div class="chips" id="cWords" aria-label="Category"></div>
+        <div class="chips" id="cLen" aria-label="Length"></div>
+
+        <section class="sec" id="topSec">
+          <div class="sec-h"><h2>Top picks</h2></div>
+          <p class="sec-sub">The best brand-style names found so far.</p>
+          <div class="surface" id="top"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><h2 id="allH">All names</h2></div>
+          <div class="surface" id="list"></div>
+          <div id="sentinel"></div>
+          <p class="end" id="end" hidden>You reached the end.</p>
+        </section>
+
+        <p class="foot">Available means not registered when it was scanned. Confirm with a registrar and check trademarks before you buy.</p>
+      </div>
     </div>
-
-    <section class="sec" id="topSec">
-      <div class="sec-h"><h2>Top picks</h2></div>
-      <p class="sec-sub" id="topSub">Strongest brand names found this week.</p>
-      <div class="surface" id="top"></div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-h"><h2 id="allH">All names</h2></div>
-      <div class="surface" id="list"></div>
-      <button class="more" id="more" hidden>Show more</button>
-    </section>
-
-    <p class="foot">Available means not registered when it was scanned. Confirm with a registrar and check trademarks before you buy.</p>
   </section>
 
   <!-- SAVED -->
@@ -161,26 +229,19 @@
   <section class="tab" id="t-activity" hidden>
     <header class="head"><h1>Activity</h1><p>What the miner has checked so far.</p></header>
     <section class="sec"><div class="sec-h"><h2>Totals</h2></div><div class="surface"><dl id="totals"></dl></div></section>
-    <section class="sec"><div class="sec-h"><h2>By type</h2></div><p class="sec-sub">Names checked, grouped by number of words and letters.</p><div class="surface" id="byType"></div></section>
-    <section class="sec"><div class="sec-h"><h2>By day</h2></div><p class="sec-sub">Names checked and found available, UTC.</p><div class="surface" id="byDay"></div></section>
+    <section class="sec"><div class="sec-h"><h2>By type</h2></div><p class="sec-sub">Names found and checked, by number of words and letters.</p><div class="surface" id="byType"></div></section>
+    <section class="sec"><div class="sec-h"><h2>By day</h2></div><p class="sec-sub">Names found and checked, UTC.</p><div class="surface" id="byDay"></div></section>
   </section>
 </main>
 
-<nav aria-label="Primary">
+<nav class="bottom" aria-label="Primary">
   <button data-tab="discover" aria-current="page"><svg><use href="#i-compass"/></svg>Discover</button>
   <button data-tab="saved"><svg><use href="#i-bookmark"/></svg>Saved</button>
   <button data-tab="activity"><svg><use href="#i-activity"/></svg>Activity</button>
 </nav>
 
 <div class="scrim" id="scrim"></div>
-<div class="sheet" id="sheet" role="dialog" aria-label="Filters" aria-modal="true">
-  <div class="sheet-h"><h2>Filters</h2><button class="iconbtn" id="closeF" aria-label="Close"><svg><use href="#i-x"/></svg></button></div>
-  <div class="group"><p class="group-l">Words</p><div class="seg" id="fWords"></div></div>
-  <div class="group"><p class="group-l">Length</p><div class="seg" id="fLen"></div></div>
-  <div class="group"><p class="group-l">Sort by</p><div class="seg" id="fSort"></div></div>
-  <div class="switch"><span>Include old archive<small>Earlier syllable-style names, lower quality.</small></span><button id="fArch" aria-pressed="false" aria-label="Include old archive"></button></div>
-  <button class="apply" id="applyF">Show names</button>
-</div>
+<button class="totop" id="toTop" aria-label="Back to top"><svg><use href="#i-up"/></svg></button>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -189,13 +250,15 @@ const BASE = new URLSearchParams(location.search).get("src") || "https://raw.git
 const TAGS = ["", ...[4,5,6,7,8,9,10].map((l) => "-len" + l), "-len8-10","-len11-13","-len14-17",
   "-w1-len3-5","-w1-len6-8","-w2-len5-7","-w2-len8-10","-w2-len11-14","-w3-len8-11","-w3-len12-14","-w3-len15-18"];
 
-const st = { all: [], favs: new Set(), q: "", words: 0, len: 0, sort: "best", arch: false, shown: 30, tab: "discover" };
+const st = { all: [], favs: new Set(), q: "", words: 0, len: 0, sort: "best", arch: false, tab: "discover", shown: 0, cur: [], counts: {} };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const isArchive = (x) => /^(Manual:|Phonetic|Generated)/.test(x.cat || "");
 const wordsOf = (x) => { const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; if (x.m && x.m.includes("+")) return x.m.split("+").length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
+const lenOk = (n, k) => !k || (k === 6 ? n <= 6 : k === 9 ? n >= 7 && n <= 9 : k === 12 ? n >= 10 && n <= 12 : n >= 13);
+// brand quality: short, fewer words, real-word / AI names first, weak words down
 const rank = (x) => x.s - (/ads|email/.test(x.n) ? 12 : 0) + (wordsOf(x) === 1 ? 8 : wordsOf(x) === 2 ? 4 : 0) - Math.max(0, x.n.length - 9) * 1.2;
 const dayAgo = (t) => { if (!t) return ""; const d = Math.floor((Date.now() - new Date(t + "T00:00:00Z")) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago"; };
 const ago = (iso) => { if (!iso) return "never"; const m = Math.round((Date.now() - new Date(iso)) / 6e4); return m < 2 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; };
@@ -204,15 +267,15 @@ const n0 = (v) => (v || 0).toLocaleString("en-US");
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), 1400); }
 
 function rowHTML(x) {
-  const meta = [x.m && x.m.includes("+") ? x.m : (x.m || ""), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
+  const w = wordsOf(x), meta = [x.m || w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
   const saved = st.favs.has(x.n);
   return `<div class="row">
     <div class="info">
-      <button class="name" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${x.n}<span>.com</span></button>
-      <p class="meta">${esc(meta)}</p>
+      <button class="name${x.n.length > 13 ? " long" : ""}" data-copy="${x.n}.com" aria-label="Copy ${x.n}.com">${x.n}<span>.com</span></button>
+      <p class="meta"><span class="ok">Available</span><span>${esc(meta)}</span></p>
     </div>
     <div class="acts">
-      <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save"} ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
+      <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
       <a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg class="sm"><use href="#i-arrow"/></svg></a>
     </div>
   </div>`;
@@ -221,8 +284,7 @@ const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search
 
 function filtered() {
   const q = st.q.trim().toLowerCase();
-  let r = st.all.filter((x) => (st.arch || !isArchive(x)) && (!q || x.n.includes(q) || (x.m || "").includes(q)) &&
-    (!st.words || wordsOf(x) === st.words) && (!st.len || (st.len === 6 ? x.n.length <= 6 : st.len === 9 ? x.n.length >= 7 && x.n.length <= 9 : st.len === 12 ? x.n.length >= 10 && x.n.length <= 12 : x.n.length >= 13)));
+  const r = st.all.filter((x) => (st.arch || !isArchive(x)) && (!q || x.n.includes(q) || (x.m || "").includes(q)) && (!st.words || wordsOf(x) === st.words) && lenOk(x.n.length, st.len));
   if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || a.n.localeCompare(b.n));
   else if (st.sort === "new") r.sort((a, b) => (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a));
   else r.sort((a, b) => a.n.localeCompare(b.n));
@@ -230,72 +292,88 @@ function filtered() {
 }
 const isFiltering = () => st.q.trim() || st.words || st.len || st.arch || st.sort !== "best";
 
+/* infinite scroll: rows are appended as the page is scrolled */
+function appendMore() {
+  if (st.shown >= st.cur.length) return;
+  const next = st.cur.slice(st.shown, st.shown + 40); st.shown += next.length;
+  $("list").insertAdjacentHTML("beforeend", next.map(rowHTML).join(""));
+  $("end").hidden = st.shown < st.cur.length || st.cur.length < 40;
+}
+function fill() { let guard = 0; while (st.tab === "discover" && st.shown < st.cur.length && $("sentinel").getBoundingClientRect().top < innerHeight + 900 && guard++ < 60) appendMore(); }
+
 function renderDiscover() {
-  const r = filtered(), topSec = $("topSec");
-  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
-  topSec.hidden = !!isFiltering();
+  st.cur = filtered(); st.shown = 0; $("list").innerHTML = ""; $("end").hidden = true;
+  const topSec = $("topSec"); topSec.hidden = !!isFiltering();
   if (!topSec.hidden) {
-    const pool = st.all.filter((x) => !isArchive(x));
-    let recent = pool.filter((x) => (x.t || "") >= weekAgo);
-    const useRecent = recent.length >= 5; if (!useRecent) recent = pool;
-    const top = recent.sort((a, b) => rank(b) - rank(a)).slice(0, 8);
-    $("topSub").textContent = useRecent ? "Strongest brand names found in the last 7 days." : "Strongest brand names found so far.";
-    $("top").innerHTML = top.length ? top.map(rowHTML).join("") : emptyHTML("Nothing yet", "The miner has not found names in this range.");
+    const seenEnd = {}, seenStart = {}, top = [];
+    for (const x of st.all.filter((x) => !isArchive(x)).sort((a, b) => rank(b) - rank(a))) { // variety: max 2 names per same ending / start
+      const parts = x.m && x.m.includes("+") ? x.m.split(" + ") : [x.n.slice(0, 4), x.n.slice(-3)], e = parts[parts.length - 1], b = parts[0];
+      if ((seenEnd[e] || 0) >= 2 || (seenStart[b] || 0) >= 2) continue;
+      seenEnd[e] = (seenEnd[e] || 0) + 1; seenStart[b] = (seenStart[b] || 0) + 1; top.push(x); if (top.length >= 10) break;
+    }
+    $("top").innerHTML = top.length ? top.map(rowHTML).join("") : emptyHTML("Nothing yet", "The miner has not found names yet.");
   }
-  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(r.length) + ")";
-  $("list").innerHTML = r.length ? r.slice(0, st.shown).map(rowHTML).join("") : emptyHTML("No names match", "Try a shorter search or clear the filters.");
-  const left = r.length - st.shown; $("more").hidden = left <= 0; $("more").textContent = "Show more (" + n0(left) + " left)";
+  $("allH").textContent = (isFiltering() ? "Results" : "All names") + " (" + n0(st.cur.length) + ")";
+  if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try a shorter search or another category.");
+  fill(); drawFilters();
 }
 function renderSaved() {
-  const r = st.all.filter((x) => st.favs.has(x.n));
+  const r = st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a));
   $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
-  $("saved").innerHTML = r.length ? r.sort((a, b) => rank(b) - rank(a)).map(rowHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark next to a name to keep it here.");
+  $("saved").innerHTML = r.length ? r.map(rowHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark next to a name to keep it here.");
 }
-function render() { if (st.tab === "discover") renderDiscover(); else if (st.tab === "saved") renderSaved(); }
+const render = () => (st.tab === "discover" ? renderDiscover() : st.tab === "saved" ? renderSaved() : 0);
 
 /* tabs */
 function go(tab) {
   st.tab = tab;
   for (const t of ["discover", "saved", "activity"]) $("t-" + t).hidden = t !== tab;
-  document.querySelectorAll("nav button").forEach((b) => { if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  document.querySelectorAll("[data-tab]").forEach((b) => { if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   scrollTo(0, 0); render();
 }
 
-/* filter sheet */
-function seg(el, opts, key) {
-  el.innerHTML = opts.map(([v, l]) => `<button data-k="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${l}</button>`).join("");
+/* filters: category + length chips are always visible; sort/archive live in the sheet (sidebar on desktop) */
+function seg(el, opts, key, cls) {
+  el.innerHTML = opts.map(([v, l, c]) => `<button class="${cls}" data-k="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${l}${c != null ? ` <small>${c}</small>` : ""}</button>`).join("");
 }
-function drawSheet() {
-  seg($("fWords"), [[0, "Any"], [1, "1 word"], [2, "2 words"], [3, "3 words"]], "words");
-  seg($("fLen"), [[0, "Any"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]], "len");
-  seg($("fSort"), [["best", "Best"], ["new", "Newest"], ["az", "A to Z"]], "sort");
+function drawFilters() {
+  const c = st.counts, wordOpts = [[0, "All", n0(c[0])], [1, "1 word", n0(c[1])], [2, "2 words", n0(c[2])], [3, "3 words", n0(c[3])]].filter(([v]) => v === 0 || c[v] > 0 || st.words === v);
+  const lenOpts = [[0, "Any length"], [6, "Up to 6"], [9, "7-9"], [12, "10-12"], [13, "13+"]];
+  seg($("cWords"), wordOpts, "words", "chip"); seg($("cLen"), lenOpts, "len", "chip");
+  seg($("fWords"), wordOpts, "words", ""); seg($("fLen"), lenOpts, "len", "");
+  seg($("fSort"), [["best", "Best"], ["new", "Newest"], ["az", "A to Z"]], "sort", "");
   $("fArch").setAttribute("aria-pressed", st.arch);
-  $("openF").dataset.on = isFiltering() && (st.words || st.len || st.arch || st.sort !== "best") ? "1" : "0";
+  $("openF").dataset.on = st.sort !== "best" || st.arch ? "1" : "0";
 }
-const sheet = (open) => { document.body.classList.toggle("sheet-open", open); if (open) drawSheet(); };
+const sheet = (open) => document.body.classList.toggle("sheet-open", open);
 
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
-  if (t.dataset.copy) { navigator.clipboard?.writeText(t.dataset.copy).then(() => toast("Copied " + t.dataset.copy), () => toast(t.dataset.copy)); }
-  else if (t.dataset.save) { const n = t.dataset.save; st.favs.has(n) ? st.favs.delete(n) : st.favs.add(n); saveFavs(); toast(st.favs.has(n) ? "Saved" : "Removed"); render(); }
+  if (t.dataset.copy) navigator.clipboard?.writeText(t.dataset.copy).then(() => toast("Copied " + t.dataset.copy), () => toast(t.dataset.copy));
+  else if (t.dataset.save) {
+    const n = t.dataset.save; st.favs.has(n) ? st.favs.delete(n) : st.favs.add(n); saveFavs(); toast(st.favs.has(n) ? "Saved" : "Removed");
+    document.querySelectorAll(`[data-save="${n}"]`).forEach((b) => b.setAttribute("aria-pressed", st.favs.has(n)));
+    if (st.tab === "saved") renderSaved();
+  }
   else if (t.dataset.tab) go(t.dataset.tab);
-  else if (t.dataset.k) { st[t.dataset.k] = t.dataset.k === "sort" ? t.dataset.v : +t.dataset.v; st.shown = 30; drawSheet(); render(); }
-  else if (t.id === "fArch") { st.arch = !st.arch; st.shown = 30; drawSheet(); render(); }
+  else if (t.dataset.k) { st[t.dataset.k] = t.dataset.k === "sort" ? t.dataset.v : +t.dataset.v; scrollTo(0, 0); renderDiscover(); }
+  else if (t.id === "fArch") { st.arch = !st.arch; renderDiscover(); }
   else if (t.id === "openF") sheet(true);
   else if (t.id === "closeF" || t.id === "applyF") sheet(false);
-  else if (t.id === "more") { st.shown += 40; render(); }
+  else if (t.id === "toTop") scrollTo({ top: 0, behavior: "smooth" });
 });
 $("scrim").onclick = () => sheet(false);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") sheet(false); });
-$("q").addEventListener("input", (e) => { st.q = e.target.value; st.shown = 30; renderDiscover(); drawSheet(); });
+$("q").addEventListener("input", (e) => { st.q = e.target.value; renderDiscover(); });
+new IntersectionObserver((e) => { if (e[0].isIntersecting) fill(); }, { rootMargin: "900px" }).observe($("sentinel"));
+addEventListener("scroll", () => { $("toTop").classList.toggle("on", scrollY > 900); if (st.tab === "discover") fill(); }, { passive: true });
+addEventListener("resize", () => fill());
 
 /* activity */
 function renderActivity(d) {
-  $("totals").innerHTML = [["Available names", n0(d.free)], ["Names checked", n0(d.scanned)], ["Mining runs", n0(d.runs)], ["Last update", ago(d.updated)]]
-    .map(([k, v]) => `<div class="kv"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+  $("totals").innerHTML = [["Available names", n0(d.free)], ["Names checked", n0(d.scanned)], ["Mining runs", n0(d.runs)], ["Last update", ago(d.updated)]].map(([k, v]) => `<div class="kv"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
   const max = Math.max(1, ...Object.values(d.types).map((v) => v.s));
-  $("byType").innerHTML = Object.entries(d.types).sort((a, b) => b[1].s - a[1].s).map(([k, v]) =>
-    `<div class="bar"><span>${esc(k)}</span><span>${n0(v.f)} / ${n0(v.s)}</span><i><b style="width:${Math.round((v.s / max) * 100)}%"></b></i></div>`).join("") || emptyHTML("No data", "Runs will appear here.");
+  $("byType").innerHTML = Object.entries(d.types).sort((a, b) => b[1].s - a[1].s).map(([k, v]) => `<div class="bar"><span>${esc(k)}</span><span>${n0(v.f)} / ${n0(v.s)}</span><i><b style="width:${Math.round((v.s / max) * 100)}%"></b></i></div>`).join("") || emptyHTML("No data", "Runs will appear here.");
   const days = Object.keys(d.hist).sort().reverse().slice(0, 30), mx = Math.max(1, ...days.map((k) => d.hist[k].s));
   $("byDay").innerHTML = days.map((k) => `<div class="bar"><span>${k}</span><span>${n0(d.hist[k].f)} / ${n0(d.hist[k].s)}</span><i><b style="width:${Math.round((d.hist[k].s / mx) * 100)}%"></b></i></div>`).join("") || emptyHTML("No history yet", "The first full run will appear here.");
 }
@@ -303,6 +381,7 @@ function renderActivity(d) {
 /* data */
 const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 (async () => {
+  drawFilters();
   try {
     const res = await Promise.all(TAGS.map((t) => Promise.all([get("found" + t + ".json").catch(() => []), get("stats" + t + ".json").catch(() => null)])));
     const seen = new Set(), types = {}, hist = {}; let scanned = 0, runs = 0, upd = "";
@@ -314,8 +393,9 @@ const get = (f) => fetch(BASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((
       types[k] = { s: s.scanned || 0, f: fd.length };
       for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
     });
-    const good = st.all.filter((x) => !isArchive(x)).length;
-    $("sum").textContent = n0(good) + " available .com names · updated " + ago(upd);
+    const good = st.all.filter((x) => !isArchive(x));
+    st.counts = { 0: good.length, 1: 0, 2: 0, 3: 0 }; good.forEach((x) => { st.counts[wordsOf(x)] = (st.counts[wordsOf(x)] || 0) + 1; });
+    $("sum").textContent = n0(good.length) + " names found · updated " + ago(upd);
     renderActivity({ free: st.all.length, scanned, runs, updated: upd, types, hist });
     render();
   } catch (e) {
