@@ -1,14 +1,14 @@
 {
- "scanned": 32539,
+ "scanned": 41768,
  "free": 1,
- "runs": 4,
- "cursor": 31800,
- "aiOk": 84,
+ "runs": 5,
+ "cursor": 40880,
+ "aiOk": 104,
  "aiFail": 7,
- "updated": "2026-11-09T22:03:05.900Z",
+ "updated": "2026-11-09T22:44:30.092Z",
  "history": {
   "2026-11-09": {
-   "s": 32539,
+   "s": 41768,
    "f": 1
   }
  },
@@ -45,6 +45,6 @@
   "meta/llama-3.2-90b-vision-instruct": 2,
   "nvidia/nemotron-3.5-lightning-30b-a3b": 2
  },
- "goodModel": "nvidia/nemotron-3-ultra-550b-a55b",
- "model": "nvidia/nemotron-3-ultra-550b-a55b"
+ "goodModel": "google/diffusiongemma-26b-a4b-it",
+ "model": "google/diffusiongemma-26b-a4b-it"
 }
