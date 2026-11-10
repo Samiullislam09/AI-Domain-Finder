@@ -1,18 +1,18 @@
 {
- "scanned": 172040,
+ "scanned": 190197,
  "free": 465,
- "runs": 19,
- "cursor": 190720,
+ "runs": 20,
+ "cursor": 211120,
  "aiOk": 127,
- "aiFail": 130,
- "updated": "2026-11-10T08:22:22.741Z",
+ "aiFail": 209,
+ "updated": "2026-11-10T09:03:54.997Z",
  "history": {
   "2026-11-09": {
    "s": 49138,
    "f": 451
   },
   "2026-11-10": {
-   "s": 122902,
+   "s": 141059,
    "f": 14
   }
  },
@@ -52,5 +52,5 @@
   "nvidia/nemotron-3.5-lightning-30b-a3b": 2
  },
  "goodModel": "",
- "model": "nvidia/nemotron-3.5-lightning-30b-a3b"
+ "model": "nvidia/nemotron-3-ultra-550b-a55b"
 }
