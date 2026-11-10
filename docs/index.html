@@ -102,6 +102,13 @@
   .name .tld{color:var(--mut);font-weight:500;white-space:nowrap}
   .c-meaning{margin:2px 0 0;color:var(--ink);opacity:.8;font-size:13.5px;line-height:1.35}
   .meta{margin:6px 0 0;color:var(--mut);font-size:12.5px;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+  .okg{display:inline-flex;align-items:center;gap:2px}
+  .chk{width:24px;height:24px;display:inline-grid;place-items:center;border-radius:6px;color:var(--ok);transition:background .15s var(--ease),color .15s var(--ease)}
+  .chk svg{width:16px;height:16px}
+  .chk:hover{background:var(--press)}
+  .chk[disabled]{color:var(--mut);cursor:default;background:none}
+  .vf{color:var(--ok);font-weight:600}
+  .vf:empty{display:none}
   .ok{background:var(--ok);color:var(--ok-ink);font-size:11.5px;font-weight:600;line-height:1;padding:3px 7px;border-radius:5px}
   .save{width:32px;height:32px;flex:none;display:grid;place-items:center;border-radius:var(--r-inner);color:var(--mut);transition:background .15s var(--ease),color .15s var(--ease)}
   .save svg{width:18px;height:18px}
@@ -277,6 +284,7 @@
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.2-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
   <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
@@ -407,7 +415,10 @@ const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["oth
 const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), kinds: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, kinds: {}, words: {}, lens: {} }, open: { topics: false, kinds: true, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
+const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 st.gb = {}; st.takenTotal = 0; // names the server re-verify job found registered (same for everyone)
+st.lb = LS.get("dm.lb", {});     // names THIS browser found registered with the green check button (saved on this device)
+st.vfAt = {};                    // name -> time of the last live check in this tab
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function isRand(x) { if (x.r !== undefined) return x.r === true; /* backend flag is authoritative */ return /^(Coined|Phonetic|Generated)|^Manual:.*(Phonetic|syllable|5-letter|random)/i.test(x.cat || ""); } // asli words se nahi bana
@@ -430,11 +441,40 @@ function nameHTML(x) { // words are shown in alternating colour so long names re
   return x.n;
 }
 /* ---------- names the server's re-verify job found registered (same list for everyone) ---------- */
-const boughtCount = () => Math.max(Object.keys(st.gb).length, st.takenTotal || 0);
+const allBought = () => ({ ...st.gb, ...st.lb });
+const boughtCount = () => Math.max(Object.keys(allBought()).length, st.takenTotal || 0);
 const heading = () => (isFiltering() ? "Results" : "All names") + " (" + n0(st.partial && !isFiltering() ? st.free : st.cur.length) + ")" + (st.partial ? " · loading full list" : "");
-function applyBought() { const b = st.gb; if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
+function applyBought() { const b = allBought(); if (!Object.keys(b).length) return; st.all = st.all.filter((x) => !b[x.n]); st.topPre = st.topPre.filter((x) => !b[x.n]); }
 function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
 function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; }
+/* ---------- green check icon: live availability check from THIS browser, only when the user clicks it (Verisign RDAP allows CORS) ---------- */
+const checking = new Set();
+const vfText = (n) => (checking.has(n) ? "checking…" : st.vfAt[n] && Date.now() - st.vfAt[n] < 30 * 60000 ? "live checked" : "");
+function setVf(n) { const t = vfText(n); document.querySelectorAll(`[data-vf="${n}"]`).forEach((e) => { e.textContent = t; }); document.querySelectorAll(`[data-check="${n}"]`).forEach((b) => { b.disabled = checking.has(n); }); }
+async function rdap(n) {
+  try { const r = await fetch(`https://rdap.verisign.com/com/v1/domain/${n}.com`, { headers: { Accept: "application/rdap+json" }, signal: AbortSignal.timeout(9000) }); return r.status === 404 ? "free" : r.status === 200 ? "taken" : null; } catch { return null; }
+}
+async function liveCheck(n) {
+  if (checking.has(n)) return;
+  checking.add(n); setVf(n);
+  const res = await rdap(n);
+  checking.delete(n);
+  if (res === "free") { st.vfAt[n] = Date.now(); setVf(n); toast(n + ".com is still available"); }
+  else if (res === "taken") { markTaken(n); }
+  else { setVf(n); toast("Could not check right now. Please try again."); }
+}
+function markTaken(n) { // someone registered it: take it off every list and count it under Bought
+  const x = st.all.find((y) => y.n === n) || st.topPre.find((y) => y.n === n);
+  if (x && !st.lb[n]) { st.lb[n] = { n: x.n, cat: x.cat, s: x.s, t: x.t, m: x.m, p: x.p, q: x.q, bt: new Date().toISOString() }; LS.set("dm.lb", st.lb); }
+  const drop = (a) => a.filter((y) => y.n !== n);
+  st.all = drop(st.all); st.topPre = drop(st.topPre); st.cur = drop(st.cur); st.shown = Math.min(st.shown, st.cur.length);
+  st.free = Math.max(0, st.free - 1);
+  document.querySelectorAll(`#list [data-card="${n}"], #top [data-card="${n}"]`).forEach((e) => e.remove());
+  updateBought(); updateStrip(); toast(n + ".com was just registered by someone else");
+  if (st.tab === "discover") { computeFacets(); renderPanel(); $("allH").textContent = heading(); if (!$("topSec").hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.map(cardHTML).join(""); } }
+  if (st.tab === "saved") renderSaved();
+  if (st.tab === "bought") renderBought();
+}
 function cardHTML(x) {
   const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") && x.m !== "coined" ? x.m : "", gone = !!x.taken;
   const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [isRand(x) ? "random name" : w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
@@ -445,7 +485,7 @@ function cardHTML(x) {
         <button class="save" data-save="${x.n}" aria-pressed="${saved}" aria-label="Save ${x.n}.com"><svg><use href="#i-bookmark"/></svg></button>
       </div>
       ${mean ? `<p class="c-meaning">${esc(mean)}</p>` : ""}
-      <p class="meta">${gone ? '<span class="tk">Taken</span>' : '<span class="ok">Available</span>'}<span>${esc(meta)}</span></p>
+      <p class="meta">${gone ? '<span class="tk">Taken</span>' : `<span class="okg"><span class="ok">Available</span><button class="chk" data-check="${x.n}" ${checking.has(x.n) ? "disabled" : ""} aria-label="Check ${x.n}.com live" title="Check live availability"><svg><use href="#i-check-circle"/></svg></button></span>`}<span>${esc(meta)}</span>${gone ? "" : `<span class="vf" data-vf="${x.n}">${vfText(x.n)}</span>`}</p>
     </div>
     ${gone ? '<span class="gone">Registered</span>' : `<a class="buy" target="_blank" rel="noopener" href="https://www.namecheap.com/domains/registration/results/?domain=${x.n}.com">Buy<svg><use href="#i-arrow"/></svg></a>`}
   </article>`;
@@ -536,12 +576,12 @@ function renderDiscover() {
   fill();
 }
 function renderSaved() {
-  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(st.gb).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
+  const r = [...st.all.filter((x) => st.favs.has(x.n)).sort((a, b) => rank(b) - rank(a)), ...Object.values(allBought()).filter((x) => st.favs.has(x.n)).map((x) => ({ ...x, taken: true }))];
   $("savedSub").textContent = r.length ? n0(r.length) + " saved on this device." : "Names you bookmarked on this device.";
   $("saved").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing saved yet", "Tap the bookmark on a name to keep it here.");
 }
 function renderBought() {
-  const r = Object.values(st.gb).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
+  const r = Object.values(allBought()).sort((a, b) => (b.bt || "").localeCompare(a.bt || "")).map((x) => ({ ...x, taken: true }));
   $("boughtSub").textContent = r.length ? n0(r.length) + (r.length === 1 ? " name was" : " names were") + " available when we found them and have since been registered." : "Names from our list that someone else has registered.";
   $("bought").innerHTML = r.length ? r.map(cardHTML).join("") : emptyHTML("Nothing bought yet", "When a name from our list gets registered by someone else, it moves here. Our server re-checks the names regularly.");
 }
@@ -604,6 +644,7 @@ function clearAll() { st.topics.clear(); st.kinds.clear(); st.words.clear(); st.
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
   if (t.dataset.copy) navigator.clipboard?.writeText(t.dataset.copy).then(() => toast("Copied " + t.dataset.copy), () => toast(t.dataset.copy));
+  else if (t.dataset.check) liveCheck(t.dataset.check);
   else if (t.dataset.save) {
     const n = t.dataset.save; st.favs.has(n) ? st.favs.delete(n) : st.favs.add(n); saveFavs(); toast(st.favs.has(n) ? "Saved" : "Removed");
     document.querySelectorAll(`[data-save="${n}"]`).forEach((b) => b.setAttribute("aria-pressed", st.favs.has(n)));
@@ -655,7 +696,7 @@ const idb = {
 const getJ = (f) => fetch(IBASE + f + "?t=" + Math.floor(Date.now() / 3e5)).then((r) => { if (!r.ok) throw 0; return r.json(); });
 function applySummary(d) {
   st.gb = {}; for (const x of d.taken || []) st.gb[x.n] = x; st.takenTotal = d.takenTotal || 0;
-  st.scanned = d.scanned; st.upd = d.updated; st.free = d.free; // the server already removed the taken names
+  st.scanned = d.scanned; st.upd = d.updated; st.free = Math.max(0, d.free - Object.keys(st.lb).filter((n) => !st.gb[n]).length); // the server already removed its own taken names
   updateBought();
   const pl = d.topPool || d.top; if (pl && d.cats) { st.topPre = pl.map((t) => fromTuple(t, d.cats)); applyBought(); } // top picks come from one place (the index builder)
   $("updTop").textContent = "Updated " + ago(d.updated);
