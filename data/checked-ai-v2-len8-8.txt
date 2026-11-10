@@ -1604,3 +1604,12 @@ autoband
 combcamp
 autodesk
 techmind
+boylower
+mansense
+mantable
+actgreat
+actnever
+carnever
+dognever
+chatgain
+keyboard
