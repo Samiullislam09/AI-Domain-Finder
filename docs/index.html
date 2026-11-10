@@ -234,6 +234,10 @@
   .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease);z-index:20}
   .toast.on{opacity:1;transform:translate(-50%,0)}
 
+  /* mobile: search + filter button stay fixed below the header while the results scroll */
+  @media (max-width:899px){
+    .tools{position:sticky;top:60px;z-index:4;background:var(--bg);margin:8px 0 0;padding:8px 0}
+  }
   /* desktop */
   @media (min-width:900px){
     body{padding-bottom:0}
@@ -405,7 +409,7 @@ const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...s
 st.gb = {}; st.takenTotal = 0; // names the server re-verify job found registered (same for everyone)
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-function isRand(x) { return x.r === true || /^(Coined|Phonetic|Generated)|^Manual:.*(Phonetic|syllable|5-letter|random)/i.test(x.cat || ""); } // asli words se nahi bana
+function isRand(x) { if (x.r !== undefined) return x.r === true; /* backend flag is authoritative */ return /^(Coined|Phonetic|Generated)|^Manual:.*(Phonetic|syllable|5-letter|random)/i.test(x.cat || ""); } // asli words se nahi bana
 const wordsOf = (x) => { if (isRand(x)) return 0; const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
 const lenKey = (n) => (n <= 3 ? 3 : n <= 10 ? n : n <= 12 ? 11 : 13); // exact lengths 3..10, then 11-12, 13+
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
@@ -455,6 +459,7 @@ function computeFacets() {
   const ql = st.q.trim().toLowerCase(), fac = { topics: {}, kinds: {}, words: {}, lens: {} };
   for (const x of st.all) {
     if (ql && !x.n.includes(ql) && !(x.m || "").toLowerCase().includes(ql)) continue;
+    if (st.sort === "dict" && !x.d) continue; // "Dictionary words only": counts follow the same rule
     const p = { topics: facetPass(x, "topics"), kinds: facetPass(x, "kinds"), words: facetPass(x, "words"), lens: facetPass(x, "lens") };
     for (const f of FACETS) if (FACETS.every((g) => g === f || p[g])) for (const v of keysOf(x, f)) fac[f][v] = (fac[f][v] || 0) + 1;
   }
@@ -462,8 +467,8 @@ function computeFacets() {
 }
 function filtered() {
   const ql = st.q.trim().toLowerCase();
-  const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "kinds") && facetPass(x, "words") && facetPass(x, "lens"));
-  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
+  const r = st.all.filter((x) => (st.sort !== "dict" || x.d) && (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "kinds") && facetPass(x, "words") && facetPass(x, "lens"));
+  if (st.sort === "best" || st.sort === "dict") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "short") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || a.n.length - b.n.length || rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "new") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a) || hOf(a) - hOf(b));
   else r.sort((a, b) => a.n.localeCompare(b.n));
@@ -554,7 +559,7 @@ const LABEL = {
   kinds: { words: "Real words", random: "Random" },
   words: { 1: "1 word", 2: "2 words", 3: "3 words" },
   lens: { 3: "3 letters", 4: "4 letters", 5: "5 letters", 6: "6 letters", 7: "7 letters", 8: "8 letters", 9: "9 letters", 10: "10 letters", 11: "11-12 letters", 13: "13+ letters" },
-  sort: [["best", "Best match"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
+  sort: [["best", "Best match"], ["dict", "Dictionary words only"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
 };
 function optHTML(f, v, label, count, type, checked) {
   const dis = count === 0 && !checked;
@@ -574,7 +579,7 @@ function renderPanel() {
       ${secHTML("kinds", "Type", ["words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join(""))}
       ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
       ${secHTML("lens", "Length", [3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
-      ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
+      ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, v === "dict" && !st.partial ? st.all.reduce((n, x) => n + (x.d ? 1 : 0), 0) : null, "radio", st.sort === v)).join(""))}
     </div>
     <div class="fp-foot"><p class="fp-note"><b>${n0(st.partial ? st.free : st.cur.length)}</b> ${st.partial ? "names" : "of " + n0(st.all.length) + " names"}</p><button class="apply" id="applyF">${st.partial ? "Show names" : "Show " + n0(st.cur.length) + " names"}</button></div>`;
   if (focus) { const [ff, vv] = focus.split(":"); const t = el.querySelector(`[data-f="${ff}"][value="${vv}"]`); if (t) t.focus({ preventScroll: true }); }
@@ -640,7 +645,7 @@ function renderActivity(d) {
 
 /* data: fast path = summary.json (5 KB) + all.json (compact, cached in IndexedDB); fallback = old per-file loading */
 const TOPIC_IDS = [...TOPICS.map((t) => t[0]), "other"];
-const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], q: t[7] || 0, r: t[8] === 1, _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
+const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], q: t[7] || 0, r: t[8] === 1, d: t[9] === 1, _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
 const idb = {
   open: () => new Promise((res, rej) => { try { const q = indexedDB.open("dm", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(); q.onblocked = () => rej(); } catch (e) { rej(e); } }),
   async get(k) { try { const db = await this.open(); return await new Promise((res) => { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }); } catch { return null; } },

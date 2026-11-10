@@ -58,6 +58,24 @@ const BAD_ANY = /(fuck|shit|porn|nazi|rape|slut|bitch|dick|cock|nude|naked|sexy|
 const FREQ = new Set(readFileSync(path.join(here, "wordlist", "words.txt"), "utf8").split(/\r?\n/).filter(Boolean).slice(0, 2500)
   .filter((w) => /^[a-z]{4,7}$/.test(w) && !BAD.has(w) && !STOP.has(w) && !/(ing|ed|ly|ness|tion|ment|ity|ers)$/.test(w) && !(w.endsWith("s") && !CUR.has(w))));
 const isWord = (w) => CUR.has(w) || FREQ.has(w);
+// Dictionary check (100% asli words): naam poori tarah 1-3 asli English dictionary words se bana ho (har hissa >=3 letter, wordlist/words.txt mein).
+const DICT_NOT = new Set("uni ads app com org net info biz pro max tech mag vid pic doc dev ops mod bio lab gen".split(" ")); // short forms / abbreviations: asli dictionary words nahi
+// 3 letter ke hisse sirf in asli English words se (words.txt mein ida, ras, rel jaise naam / short forms bhi hain, wo nahi chalenge)
+const OK3 = new Set(("act add age ago aid aim air all ant any arm art ash ask ate bad bag ban bar bat bay bed bee beg bet bid big bit bow box boy bud bug bus buy cab can cap car cat cop cow cry cup cut dad day den dew did die dig dim dip dog dot dry due dug ear eat egg end era eve eye fan far fat fee few fig fit fix fly fog fox fun fur gap gas gel gem get gin gum gun gut guy gym had ham has hat hay hen her hid him hip his hit hog hop hot how hub hug hut ice icy ill ink inn ion its jam jar jaw jet job jog joy jug key kid kit lab lad lap law lay leg let lid lie lip log lot low mad man map mat may men met mix mud mug nap net new nod not now nut oak oar odd off oil old one orb our out owl own pad pan pat paw pay pea peg pen pet pie pig pin pit pot pub rag ram ran rat raw ray red rib rid rim rip rob rod rot row rub rug run sad sag sat saw say sea see set sew she shy sin sip sir sit six ski sky sly son sow soy spa spy sue sum sun tab tag tan tap tar tax tea ten the tie tin tip toe ton too top toy try tub tug two urn use van vat vet via vow wag war was wax way web wed wet who why wig win wit woe won wow yak yam yes yet you zip zoo elk").split(" "));
+const DICT = new Set(readFileSync(path.join(here, "wordlist", "words.txt"), "utf8").split(/\r?\n/).filter(Boolean).slice(0, 20000).filter((w) => /^[a-z]{4,10}$/.test(w) && !STOP.has(w) && !BAD.has(w) && !DICT_NOT.has(w))); // lambe hisse: sabse aam 20,000 words
+const dictWord = (w) => (w.length === 3 ? OK3.has(w) && !STOP.has(w) && !BAD.has(w) && !DICT_NOT.has(w) : DICT.has(w));
+function dictSplit(n) {
+  const memo = new Map();
+  const go = (i, left) => {
+    if (i === n.length) return true;
+    if (left === 0) return false;
+    const k = i * 4 + left; if (memo.has(k)) return memo.get(k);
+    let ok = false;
+    for (let j = i + 3; j <= Math.min(n.length, i + 10) && !ok; j++) if (dictWord(n.slice(i, j)) && go(j, left - 1)) ok = true;
+    memo.set(k, ok); return ok;
+  };
+  return go(0, 3);
+}
 function segment(n) { // best split into <=3 words: fewer parts first, then more curated words
   const memo = new Map();
   const go = (i) => {
@@ -79,6 +97,8 @@ function quality(x) {
   if (BAD_ANY.test(x.n)) return { q: 0, random: true };
   const seg = segment(x.n);
   if (!seg || !seg.parts.length) {
+    // asli dictionary words se bana hai (par curated list mein nahi): random nahi, bas curated se kam score
+    if (dictSplit(x.n)) return { q: Math.max(10, 50 - x.n.length), random: false, sense: false };
     // chhote invented naam (Coined / AI, <=6 letter) jo bolne mein English jaise hon: shortest-first mein sabse upar
     if (/^Coined/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 30 + (7 - x.n.length) * 2, parts: null, sense: false, coined: true, random: true }; // random: asli words ke neeche
     if (/^AI:/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 100 + (7 - x.n.length) * 10, parts: null, sense: true, coined: true, random: true }; // AI ne khud chuna: upar
@@ -134,8 +154,8 @@ for (const f of files.filter((f) => /^stats.*\.json$/.test(f)).sort()) {
 
 // ---- compact tuples ----
 const cats = [], catIdx = new Map();
-const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0, x._rand ? 1 : 0]; };
-for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; x._rand = !!r.random; }
+const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0, x._rand ? 1 : 0, x._dict ? 1 : 0]; };
+for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; x._dict = !BAD_ANY.test(x.n) && dictSplit(x.n); x._rand = !!r.random && !x._dict; }
 // clean (q>0) naam pehle: score, phir chhota naam; baaki purane rank se
 // sense wale (q>=60) pehle, unmein sabse zyada score (chhota naam + achha pattern) pehle; phir baaki clean; phir baaki
 all.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (a.q >= 60 ? b.q - a.q || a.n.length - b.n.length : (b.q > 0) - (a.q > 0) || b.q - a.q || rank(b) - rank(a)) || a.n.localeCompare(b.n));
@@ -171,5 +191,6 @@ writeFileSync(path.join(DATA, "all.json"), JSON.stringify({ v, cats, items }));
 writeFileSync(path.join(DATA, "summary.json"), JSON.stringify(summary));
 console.log(`Clean naam (q>0): ${all.filter((x) => x.q > 0).length}, q>=60: ${all.filter((x) => x.q >= 60).length}`);
 console.log("TOP:", top.map((x) => x.n + "(" + x.q + ")").join(" "));
+console.log(`Dictionary-valid names: ${all.filter((x) => x._dict).length} / ${all.length}`);
 console.log(`Taken (verify se hata): ${Object.keys(takenMap).length}`);
 console.log(`Index: ${all.length} naam, scanned ${scanned}, summary ${(JSON.stringify(summary).length / 1024).toFixed(0)} KB, all ${(JSON.stringify({ v, cats, items }).length / 1048576).toFixed(2)} MB`);
