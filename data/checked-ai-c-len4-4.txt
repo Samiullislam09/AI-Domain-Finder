@@ -1101,3 +1101,8 @@ bapo
 badi
 cadi
 baci
+rule
+keen
+keon
+khan
+zero
