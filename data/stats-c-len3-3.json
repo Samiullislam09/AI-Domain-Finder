@@ -1,18 +1,18 @@
 {
- "scanned": 776434,
+ "scanned": 801034,
  "free": 0,
- "runs": 32,
- "cursor": 777280,
+ "runs": 33,
+ "cursor": 801880,
  "aiOk": 1,
- "aiFail": 3777,
- "updated": "2026-11-10T17:22:15.863Z",
+ "aiFail": 3905,
+ "updated": "2026-11-10T18:03:39.893Z",
  "history": {
   "2026-11-09": {
    "s": 61906,
    "f": 0
   },
   "2026-11-10": {
-   "s": 714528,
+   "s": 739128,
    "f": 0
   }
  },
@@ -50,7 +50,8 @@
   "nvidia/nemotron-3-ultra-550b-a55b": 2,
   "google/diffusiongemma-26b-a4b-it": 2,
   "nvidia/nemotron-3.5-lightning-30b-a3b": 2,
-  "meta/llama-guard-4-12b": 1
+  "meta/llama-guard-4-12b": 1,
+  "nvidia/riva-translate-4b-instruct-v2": 1
  },
  "goodModel": "",
  "model": "nvidia/nemotron-3-ultra-550b-a55b"
