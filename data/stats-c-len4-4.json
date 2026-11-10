@@ -1,18 +1,18 @@
 {
- "scanned": 388034,
+ "scanned": 404473,
  "free": 1,
- "runs": 26,
- "cursor": 387480,
+ "runs": 27,
+ "cursor": 403920,
  "aiOk": 111,
- "aiFail": 1660,
- "updated": "2026-11-10T13:13:39.734Z",
+ "aiFail": 1742,
+ "updated": "2026-11-10T13:55:01.875Z",
  "history": {
   "2026-11-09": {
    "s": 48909,
    "f": 1
   },
   "2026-11-10": {
-   "s": 339125,
+   "s": 355564,
    "f": 0
   }
  },
@@ -53,5 +53,5 @@
   "meta/llama-guard-4-12b": 2
  },
  "goodModel": "nvidia/riva-translate-4b-instruct-v2",
- "model": "nvidia/riva-translate-4b-instruct-v2"
+ "model": "nvidia/nemotron-3-ultra-550b-a55b"
 }
