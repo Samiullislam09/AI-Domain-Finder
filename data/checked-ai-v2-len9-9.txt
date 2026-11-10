@@ -824,3 +824,15 @@ reedstone
 ticancore
 titancore
 forgedata
+templates
+cedarwood
+pinecedar
+maplewood
+cedarroot
+oasispond
+rivermoss
+lakecedar
+pondcedar
+woodbloom
+leafymoss
+stonereed
