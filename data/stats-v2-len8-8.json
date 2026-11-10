@@ -1,19 +1,19 @@
 {
- "scanned": 117548,
- "free": 2832,
- "runs": 13,
- "cursor": 142240,
- "aiOk": 139,
- "aiFail": 40,
- "updated": "2026-11-10T04:13:53.204Z",
+ "scanned": 129019,
+ "free": 2834,
+ "runs": 14,
+ "cursor": 156600,
+ "aiOk": 147,
+ "aiFail": 50,
+ "updated": "2026-11-10T04:55:11.292Z",
  "history": {
   "2026-11-09": {
    "s": 50380,
    "f": 2818
   },
   "2026-11-10": {
-   "s": 67168,
-   "f": 14
+   "s": 78639,
+   "f": 16
   }
  },
  "len": "8-8",
@@ -50,6 +50,6 @@
   "google/diffusiongemma-26b-a4b-it": 2,
   "nvidia/nemotron-3-ultra-550b-a55b": 2
  },
- "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
- "goodModel": "nvidia/nemotron-3.5-lightning-30b-a3b"
+ "model": "nvidia/riva-translate-4b-instruct-v2",
+ "goodModel": "nvidia/riva-translate-4b-instruct-v2"
 }
