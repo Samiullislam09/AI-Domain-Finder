@@ -30,6 +30,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Load the saved data (index branch)
+        run: |
+          if git fetch --depth=1 origin index; then
+            git checkout FETCH_HEAD -- data 2>/dev/null && echo "data restored from the index branch" || echo "no data on the index branch yet"
+          fi
+          mkdir -p data
+          sleep 1
+          touch /tmp/marker
       - name: Mine ${{ matrix.label }}
         timeout-minutes: 25
         continue-on-error: true
@@ -42,19 +50,19 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL }}
           MINE_MINUTES: "20"
-      - name: Save results
+      - name: Collect this job's files
         if: ${{ !cancelled() }}
         run: |
-          git config user.name "domain-miner"
-          git config user.email "domain-miner@users.noreply.github.com"
-          git add data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "Mine ${{ matrix.label }}: new free domains [skip ci]"
-          for i in 1 2 3 4 5 6; do
-            git pull --rebase && git push && exit 0
-            sleep $((RANDOM % 10 + 3))
-          done
-          exit 1
+          mkdir -p out
+          find data -type f -newer /tmp/marker -exec cp --parents {} out/ \;
+          echo "files from this job:"; find out -type f | head -20
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: mined-${{ strategy.job-index }}
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 1
 
   # Pehle se mile hue naamon ko dobara registry se check karta hai (mining ke saath-saath chalta hai).
   # Jo naam ab registered nikle wo state/taken.json mein jate hain; index job unko available list se hata deta hai.
@@ -88,49 +96,69 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
-  # Saari found/stats files ko 2 compact files mein jodta hai (website tez load ho), bike hue naam hata deta hai,
-  # aur alag "index" branch par ek hi commit se overwrite karta hai (isse main branch ki history nahi badhti).
+  # Mining ka saara data ab sirf "index" branch par rehta hai (main par commit nahi hote, isliye Vercel ka deployment limit nahi bharta).
+  # Ye job akela likhne wala hai: purana data + is cycle ke mining results + verify state jodta hai, index banata hai,
+  # aur sab kuch ek hi commit se index branch par overwrite karta hai (history nahi badhti).
   index:
     needs: [mine, verify]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    concurrency:
+      group: index-publish
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Restore the saved data and state (index branch)
+        run: |
+          mkdir -p state data
+          if git fetch --depth=1 origin index; then
+            git checkout FETCH_HEAD -- data 2>/dev/null || echo "no data on the index branch yet"
+            for f in verified.json taken.json; do git show FETCH_HEAD:$f > state/$f 2>/dev/null || rm -f state/$f; done
+          fi
+      - name: Get this cycle's mining results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: mined-*
+          merge-multiple: true
+          path: mined
+      - name: Add the new mining results to the data
+        run: |
+          if [ -d mined/data ]; then
+            cp -r mined/data/. data/
+            echo "merged $(find mined/data -type f | wc -l) files"
+          else
+            echo "no new mining results this cycle"
+          fi
       - name: Get the verify state
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: verify-state
           path: state
-      - name: Fall back to the last published state
-        run: |
-          mkdir -p state
-          if [ ! -f state/taken.json ] || [ ! -f state/verified.json ]; then
-            git fetch --depth=1 origin index || true
-            for f in verified.json taken.json; do [ -f state/$f ] || git show FETCH_HEAD:$f > state/$f 2>/dev/null || rm -f state/$f; done
-          fi
       - name: Build compact index
         run: node build-index.mjs
-      - name: Publish to the index branch
+      - name: Publish data and index to the index branch
         env:
           TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/idx && cp data/all.json data/summary.json /tmp/idx/
+          mkdir -p /tmp/idx/data /tmp/idx/docs
+          cp -r data/. /tmp/idx/data/
+          mv /tmp/idx/data/all.json /tmp/idx/data/summary.json /tmp/idx/
           cp state/verified.json state/taken.json /tmp/idx/ 2>/dev/null || true
           cd /tmp/idx
-          # Vercel is connected to this repo: a tiny docs/ folder + vercel.json stops it from trying (and failing) to build this data branch
-          mkdir -p docs
+          # Vercel is connected to this repo: a tiny docs/ folder + vercel.json keeps it from building this data branch
           printf '{"git":{"deploymentEnabled":false}}' > docs/vercel.json
           printf '<!doctype html><title>data</title>' > docs/index.html
           git init -q -b index
           git config user.name "domain-miner"
           git config user.email "domain-miner@users.noreply.github.com"
           git add -A
-          git commit -q -m "Compact index"
+          git commit -q -m "Mining data and index"
           git remote add origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           git push -f -q origin index
 
