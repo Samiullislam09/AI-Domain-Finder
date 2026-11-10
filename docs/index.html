@@ -399,13 +399,14 @@ const TOPICS = [
 const topicsOf = (x) => { const s = (x.n + " " + (x.m || "")).toLowerCase(); const r = TOPICS.filter((t) => t[2].split(" ").some((k) => s.includes(k))).map((t) => t[0]); return r.length ? r : ["other"]; };
 const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["other", "Other"]]);
 
-const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, words: {}, lens: {} }, open: { topics: false, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
+const st = { partial: true, free: 0, topPre: [], all: [], favs: new Set(), q: "", topics: new Set(), kinds: new Set(), words: new Set(), lens: new Set(), sort: "best", tab: "discover", shown: 0, cur: [], fac: { topics: {}, kinds: {}, words: {}, lens: {} }, open: { topics: false, kinds: true, words: true, lens: true, sort: true }, scanned: 0, upd: "" };
 try { st.favs = new Set(JSON.parse(localStorage.getItem("favs") || "[]")); } catch {}
 const saveFavs = () => { try { localStorage.setItem("favs", JSON.stringify([...st.favs])); } catch {} };
 st.gb = {}; st.takenTotal = 0; // names the server re-verify job found registered (same for everyone)
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const wordsOf = (x) => { if (/^Coined/.test(x.cat || "")) return 1; const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
+function isRand(x) { return x.r === true || /^(Coined|Phonetic|Generated)|^Manual:.*(Phonetic|syllable|5-letter|random)/i.test(x.cat || ""); } // asli words se nahi bana
+const wordsOf = (x) => { if (isRand(x)) return 0; const m = (x.cat || "").match(/^(\d)-word/); if (m) return +m[1]; const pr = x.p || (x.m && x.m.includes("+") ? x.m : ""); if (pr) return pr.split(/\s*\+\s*/).length; return /dictionary/i.test(x.cat || "") ? 1 : 2; };
 const lenKey = (n) => (n <= 3 ? 3 : n <= 10 ? n : n <= 12 ? 11 : 13); // exact lengths 3..10, then 11-12, 13+
 const base = (x) => (/^AI:/.test(x.cat || "") && !x.m ? 60 : x.s); // old AI names without a meaning were low quality
 const rank = (x) => (x.q >= 60 ? 2000 + Math.floor(x.q / 4) * 4 : x.q > 0 ? 1000 + x.q : rank0(x)); // score (chhota naam + achha pattern), 4 ke band, phir random
@@ -430,8 +431,8 @@ function applyBought() { const b = st.gb; if (!Object.keys(b).length) return; st
 function updateBought() { document.querySelectorAll("[data-bn]").forEach((e) => { e.textContent = n0(boughtCount()); }); }
 function updateStrip() { if (!st.upd) return; const h = `<b>${n0(st.scanned)}</b> names scanned &middot; <b>${n0(st.free)}</b> available &middot; updated ${ago(st.upd)}`; $("strip").innerHTML = h; }
 function cardHTML(x) {
-  const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") ? x.m : "", gone = !!x.taken;
-  const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
+  const w = wordsOf(x), saved = st.favs.has(x.n), mean = x.m && !x.m.includes("+") && x.m !== "coined" ? x.m : "", gone = !!x.taken;
+  const meta = gone ? ["found " + (x.t || "earlier"), "registered " + ago(x.bt)].join(" · ") : [isRand(x) ? "random name" : w + (w > 1 ? " words" : " word"), x.n.length + " letters", dayAgo(x.t)].filter(Boolean).join(" · ");
   return `<article class="card${gone ? " gone-card" : ""}" data-card="${x.n}">
     <div class="c-main">
       <div class="c-top">
@@ -447,21 +448,21 @@ function cardHTML(x) {
 const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search"/></svg><b>${title}</b>${text}</div>`;
 
 /* filtering: several picks inside one group = OR, between groups = AND. Option counts respect the other active filters. */
-const FACETS = ["topics", "words", "lens"];
-const keysOf = (x, f) => (f === "topics" ? x._t : f === "words" ? [wordsOf(x)] : [lenKey(x.n.length)]);
+const FACETS = ["topics", "kinds", "words", "lens"];
+const keysOf = (x, f) => (f === "topics" ? x._t : f === "kinds" ? [isRand(x) ? "random" : "words"] : f === "words" ? [wordsOf(x)] : [lenKey(x.n.length)]);
 function facetPass(x, f) { return !st[f].size || keysOf(x, f).some((v) => st[f].has(v)); }
 function computeFacets() {
-  const ql = st.q.trim().toLowerCase(), fac = { topics: {}, words: {}, lens: {} };
+  const ql = st.q.trim().toLowerCase(), fac = { topics: {}, kinds: {}, words: {}, lens: {} };
   for (const x of st.all) {
     if (ql && !x.n.includes(ql) && !(x.m || "").toLowerCase().includes(ql)) continue;
-    const p = { topics: facetPass(x, "topics"), words: facetPass(x, "words"), lens: facetPass(x, "lens") };
+    const p = { topics: facetPass(x, "topics"), kinds: facetPass(x, "kinds"), words: facetPass(x, "words"), lens: facetPass(x, "lens") };
     for (const f of FACETS) if (FACETS.every((g) => g === f || p[g])) for (const v of keysOf(x, f)) fac[f][v] = (fac[f][v] || 0) + 1;
   }
   st.fac = fac;
 }
 function filtered() {
   const ql = st.q.trim().toLowerCase();
-  const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "words") && facetPass(x, "lens"));
+  const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "kinds") && facetPass(x, "words") && facetPass(x, "lens"));
   if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "short") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || a.n.length - b.n.length || rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "new") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a) || hOf(a) - hOf(b));
@@ -485,7 +486,7 @@ function diversify(arr, win = 12, look = 600) {
   }
   return out;
 }
-const activeCount = () => st.topics.size + st.words.size + st.lens.size;
+const activeCount = () => st.topics.size + st.kinds.size + st.words.size + st.lens.size;
 const isFiltering = () => st.q.trim() || activeCount() || st.sort !== "best";
 
 /* infinite scroll */
@@ -550,6 +551,7 @@ function go(tab) {
 
 /* filter panel (left rail on desktop, bottom sheet on mobile) */
 const LABEL = {
+  kinds: { words: "Real words", random: "Random" },
   words: { 1: "1 word", 2: "2 words", 3: "3 words" },
   lens: { 3: "3 letters", 4: "4 letters", 5: "5 letters", 6: "6 letters", 7: "7 letters", 8: "8 letters", 9: "9 letters", 10: "10 letters", 11: "11-12 letters", 13: "13+ letters" },
   sort: [["best", "Best match"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
@@ -569,18 +571,20 @@ function renderPanel() {
     <div class="fp-head"><h2>Filters${act ? `<small>${act} applied</small>` : ""}</h2><button class="linkbtn" data-clear ${isFiltering() ? "" : "disabled"}>Clear all</button><button class="fp-close" id="closeF" aria-label="Close filters"><svg><use href="#i-x"/></svg></button></div>
     <div class="fp-body">
       ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], C(f.topics[id]), "checkbox", st.topics.has(id))).join(""))}
+      ${secHTML("kinds", "Type", ["words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join(""))}
       ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
       ${secHTML("lens", "Length", [3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
       ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
     </div>
     <div class="fp-foot"><p class="fp-note"><b>${n0(st.partial ? st.free : st.cur.length)}</b> ${st.partial ? "names" : "of " + n0(st.all.length) + " names"}</p><button class="apply" id="applyF">${st.partial ? "Show names" : "Show " + n0(st.cur.length) + " names"}</button></div>`;
   if (focus) { const [ff, vv] = focus.split(":"); const t = el.querySelector(`[data-f="${ff}"][value="${vv}"]`); if (t) t.focus({ preventScroll: true }); }
-  $("cTopic").innerHTML = topics.map((id) => `<button class="chip" data-quick="${id}" aria-pressed="${st.topics.has(id)}">${esc(TOPIC_NAME[id])}${st.partial ? "" : ` <small>${n0(f.topics[id] || 0)}</small>`}</button>`).join("");
+  $("cTopic").innerHTML = `<button class="chip" data-kind="random" aria-pressed="${st.kinds.has("random")}">Random${st.partial ? "" : ` <small>${n0(f.kinds.random || 0)}</small>`}</button>` + topics.map((id) => `<button class="chip" data-quick="${id}" aria-pressed="${st.topics.has(id)}">${esc(TOPIC_NAME[id])}${st.partial ? "" : ` <small>${n0(f.topics[id] || 0)}</small>`}</button>`).join("");
   const nb = $("nb"); nb.hidden = !act; nb.textContent = act;
 }
 function renderApplied() {
   const chips = [];
   for (const id of st.topics) chips.push(["topics", id, TOPIC_NAME[id]]);
+  for (const k of st.kinds) chips.push(["kinds", k, LABEL.kinds[k]]);
   for (const w of st.words) chips.push(["words", w, LABEL.words[w]]);
   for (const k of st.lens) chips.push(["lens", k, LABEL.lens[k]]);
   if (st.q.trim()) chips.push(["q", "", "“" + st.q.trim() + "”"]);
@@ -589,7 +593,7 @@ function renderApplied() {
 }
 const sheet = (open) => document.body.classList.toggle("sheet-open", open);
 const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
-function clearAll() { st.topics.clear(); st.words.clear(); st.lens.clear(); st.q = ""; $("q").value = ""; st.sort = "best"; }
+function clearAll() { st.topics.clear(); st.kinds.clear(); st.words.clear(); st.lens.clear(); st.q = ""; $("q").value = ""; st.sort = "best"; }
 
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
@@ -602,7 +606,8 @@ document.addEventListener("click", (e) => {
   else if (t.dataset.tab) { e.preventDefault(); go(t.dataset.tab); }
   else if (t.hasAttribute("data-shuffle")) { SEED = (Math.random() * 4294967296) >>> 0; st.all.forEach((x) => { x._h = undefined; }); st.topPre.forEach((x) => { x._h = undefined; }); render(); }
   else if (t.hasAttribute("data-clear")) { clearAll(); scrollTo(0, 0); renderDiscover(); }
-  else if (t.dataset.rm) { const f = t.dataset.rm; if (f === "q") { st.q = ""; $("q").value = ""; } else toggle(st[f], f === "topics" ? t.dataset.v : +t.dataset.v); scrollTo(0, 0); renderDiscover(); }
+  else if (t.dataset.rm) { const f = t.dataset.rm; if (f === "q") { st.q = ""; $("q").value = ""; } else toggle(st[f], f === "topics" || f === "kinds" ? t.dataset.v : +t.dataset.v); scrollTo(0, 0); renderDiscover(); }
+  else if (t.dataset.kind) { toggle(st.kinds, t.dataset.kind); scrollTo(0, 0); renderDiscover(); }
   else if (t.dataset.quick) { toggle(st.topics, t.dataset.quick); scrollTo(0, 0); renderDiscover(); }
   else if (t.id === "openF") sheet(true);
   else if (t.id === "closeF" || t.id === "applyF") sheet(false);
@@ -610,7 +615,7 @@ document.addEventListener("click", (e) => {
 });
 $("sheet").addEventListener("change", (e) => {
   const i = e.target; if (!i.dataset.f) return;
-  if (i.dataset.f === "sort") st.sort = i.value; else toggle(st[i.dataset.f], i.dataset.f === "topics" ? i.value : +i.value);
+  if (i.dataset.f === "sort") st.sort = i.value; else toggle(st[i.dataset.f], i.dataset.f === "topics" || i.dataset.f === "kinds" ? i.value : +i.value);
   scrollTo(0, 0); renderDiscover();
 });
 $("sheet").addEventListener("toggle", (e) => { if (e.target.dataset && e.target.dataset.sec) st.open[e.target.dataset.sec] = e.target.open; }, true);
@@ -635,7 +640,7 @@ function renderActivity(d) {
 
 /* data: fast path = summary.json (5 KB) + all.json (compact, cached in IndexedDB); fallback = old per-file loading */
 const TOPIC_IDS = [...TOPICS.map((t) => t[0]), "other"];
-const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], q: t[7] || 0, _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
+const fromTuple = (t, cats) => ({ n: t[0], cat: cats[t[1]], s: t[2], t: t[3], m: t[4], p: t[5], q: t[7] || 0, r: t[8] === 1, _t: TOPIC_IDS.filter((_, i) => t[6] & (1 << i)) });
 const idb = {
   open: () => new Promise((res, rej) => { try { const q = indexedDB.open("dm", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(); q.onblocked = () => rej(); } catch (e) { rej(e); } }),
   async get(k) { try { const db = await this.open(); return await new Promise((res) => { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }); } catch { return null; } },

@@ -76,12 +76,13 @@ function segment(n) { // best split into <=3 words: fewer parts first, then more
   return go(0);
 }
 function quality(x) {
-  if (BAD_ANY.test(x.n)) return { q: 0 };
+  if (BAD_ANY.test(x.n)) return { q: 0, random: true };
   const seg = segment(x.n);
   if (!seg || !seg.parts.length) {
     // chhote invented naam (Coined / AI, <=6 letter) jo bolne mein English jaise hon: shortest-first mein sabse upar
-    if (/^(Coined|AI:)/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 100 + (7 - x.n.length) * 10, parts: null, sense: true, coined: true };
-    return { q: 0 };
+    if (/^Coined/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 30 + (7 - x.n.length) * 2, parts: null, sense: false, coined: true, random: true }; // random: asli words ke neeche
+    if (/^AI:/.test(x.cat || "") && x.n.length <= 6 && friendly(x.n)) return { q: 100 + (7 - x.n.length) * 10, parts: null, sense: true, coined: true, random: true }; // AI ne khud chuna: upar
+    return { q: 0, random: true }; // asli words mein nahi tootta = random naam
   }
   const parts = seg.parts;
   if (parts.some((w) => STOP.has(w) || BAD.has(w)) || new Set(parts).size !== parts.length) return { q: 0 };
@@ -115,7 +116,8 @@ for (const f of files.filter((f) => /^found.*\.json$/.test(f)).sort()) for (cons
 // verify.mjs ne jo naam ab registered paaye (state/taken.json) unko available list se hata do
 const takenMap = readJson(path.join(here, "state", "taken.json"), {});
 for (const n of Object.keys(takenMap)) seen.delete(n);
-const all = [...seen.values()];
+for (const x of seen.values()) if (x.m === "coined") x.m = ""; // purana label meaning ki jagah dikh raha tha
+const all = [...seen.values()].filter((x) => !/^Coined/.test(x.cat || "") || friendly(x.n)); // random naam jo bolne mein theek nahi lagte unhe site par mat dikhao
 
 const types = {}, hist = {}; let scanned = 0, runs = 0, updated = "";
 for (const f of files.filter((f) => /^stats.*\.json$/.test(f)).sort()) {
@@ -125,15 +127,15 @@ for (const f of files.filter((f) => /^stats.*\.json$/.test(f)).sort()) {
   scanned += s.scanned || 0; runs += s.runs || 0; if ((s.updated || "") > updated) updated = s.updated;
   const cm = tag.match(/^-c-len(\d+)-(\d+)$/);
   const mm = tag.match(/^-([wv])(\d)-len(\d+)-(\d+)$/);
-  const label = cm ? `Short coined, ${cm[1]}-${cm[2]} letters` : mm ? `${mm[2]} word${mm[1] === "v" ? " (curated)" : ""}, ${mm[3]}-${mm[4]} letters` : tag ? `Earlier run, ${tag.slice(4)} letters` : "Earlier archive";
+  const label = cm ? `Short random, ${cm[1]}-${cm[2]} letters` : mm ? `${mm[2]} word${mm[1] === "v" ? " (curated)" : ""}, ${mm[3]}-${mm[4]} letters` : tag ? `Earlier run, ${tag.slice(4)} letters` : "Earlier archive";
   types[label] = { s: s.scanned || 0, f: found };
   for (const [d, v] of Object.entries(s.history || {})) { (hist[d] ||= { s: 0, f: 0 }); hist[d].s += v.s; hist[d].f += v.f; }
 }
 
 // ---- compact tuples ----
 const cats = [], catIdx = new Map();
-const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0]; };
-for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; }
+const tuple = (x) => { let c = catIdx.get(x.cat || ""); if (c === undefined) { c = cats.length; cats.push(x.cat || ""); catIdx.set(x.cat || "", c); } return [x.n, c, x.s || 0, x.t || "", x.m || "", x.p || (x._parts && x._parts.length > 1 ? x._parts.join("+") : ""), topicMask(x), x.q || 0, x._rand ? 1 : 0]; };
+for (const x of all) { const r = quality(x); x.q = r.q; x._parts = r.parts || null; x._sense = !!r.sense; x._rand = !!r.random; }
 // clean (q>0) naam pehle: score, phir chhota naam; baaki purane rank se
 // sense wale (q>=60) pehle, unmein sabse zyada score (chhota naam + achha pattern) pehle; phir baaki clean; phir baaki
 all.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (a.q >= 60 ? b.q - a.q || a.n.length - b.n.length : (b.q > 0) - (a.q > 0) || b.q - a.q || rank(b) - rank(a)) || a.n.localeCompare(b.n));

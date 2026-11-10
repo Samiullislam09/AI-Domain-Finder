@@ -58,7 +58,7 @@ const PAIRS = (() => {
   if (COINED) { // trigram model: English jaise bolne wale chhote naam, sabse "English jaisa" pehle
     const model = buildModel(path.join(here, "wordlist", "words.txt"));
     const rnd = mulberry(20261110 + COINED * 131);
-    return coinedCandidates(model, COINED, rnd, COINED <= 4 ? 80000 : 150000).map((n) => [n, "coined"]);
+    return coinedCandidates(model, COINED, rnd, COINED <= 4 ? 80000 : 150000).map((n) => [n, ""]);
   }
   if (VOCAB) { // curated words: adjective + noun, nature + nature/place, adjective + nature + noun (jaise boldfalcon, oakfield, bluesunhill)
     const txt = readFileSync(path.join(here, "wordlist", "brand-words.txt"), "utf8");
