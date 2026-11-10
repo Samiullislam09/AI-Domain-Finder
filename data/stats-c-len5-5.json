@@ -1,19 +1,19 @@
 {
- "scanned": 287378,
- "free": 12856,
- "runs": 32,
- "cursor": 295080,
- "aiOk": 153,
- "aiFail": 312,
- "updated": "2026-11-10T17:22:04.001Z",
+ "scanned": 297524,
+ "free": 12917,
+ "runs": 33,
+ "cursor": 305320,
+ "aiOk": 157,
+ "aiFail": 323,
+ "updated": "2026-11-10T18:03:31.786Z",
  "history": {
   "2026-11-09": {
    "s": 46325,
    "f": 600
   },
   "2026-11-10": {
-   "s": 241053,
-   "f": 12256
+   "s": 251199,
+   "f": 12317
   }
  },
  "len": "5-5",
@@ -40,7 +40,7 @@
   "nvidia/cosmos3-nano-reasoner",
   "nvidia/kumo-relational01"
  ],
- "goodModel": "nvidia/nemotron-3.5-lightning-30b-a3b",
+ "goodModel": "",
  "slow": {
   "google/gemma-4-31b-it": 2,
   "deepseek-ai/deepseek-v4.1-flash": 2,
@@ -49,7 +49,8 @@
   "meta/muse-glimmer-30b": 2,
   "meta/llama-3.2-90b-vision-instruct": 2,
   "google/diffusiongemma-26b-a4b-it": 2,
-  "nvidia/nemotron-3-ultra-550b-a55b": 2
+  "nvidia/nemotron-3-ultra-550b-a55b": 2,
+  "nvidia/nemotron-3.5-lightning-30b-a3b": 1
  },
  "model": "nvidia/nemotron-3.5-lightning-30b-a3b"
 }
