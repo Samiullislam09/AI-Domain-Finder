@@ -1,15 +1,19 @@
 {
- "scanned": 48045,
+ "scanned": 58869,
  "free": 1,
- "runs": 6,
- "cursor": 47200,
- "aiOk": 106,
- "aiFail": 14,
- "updated": "2026-11-09T23:25:42.893Z",
+ "runs": 7,
+ "cursor": 57920,
+ "aiOk": 110,
+ "aiFail": 27,
+ "updated": "2026-11-10T00:07:02.715Z",
  "history": {
   "2026-11-09": {
-   "s": 48045,
+   "s": 48909,
    "f": 1
+  },
+  "2026-11-10": {
+   "s": 9960,
+   "f": 0
   }
  },
  "len": "4-4",
@@ -44,8 +48,9 @@
   "nvidia/ising-calibration-1.5-31b": 2,
   "meta/llama-3.2-90b-vision-instruct": 2,
   "nvidia/nemotron-3.5-lightning-30b-a3b": 2,
-  "google/diffusiongemma-26b-a4b-it": 2
+  "google/diffusiongemma-26b-a4b-it": 2,
+  "nvidia/nemotron-3-ultra-550b-a55b": 2
  },
- "goodModel": "nvidia/nemotron-3-ultra-550b-a55b",
+ "goodModel": "",
  "model": "nvidia/nemotron-3-ultra-550b-a55b"
 }
