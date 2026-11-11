@@ -238,6 +238,33 @@
   .nb[hidden]{display:none}
   #openF{position:relative}
 
+  /* header guide button + first-time tour */
+  .helpbtn{margin-left:auto;height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r-inner);font-weight:600;font-size:13.5px;color:var(--ink);background:var(--surface);transition:background .15s var(--ease)}
+  .helpbtn:hover{background:var(--press)}
+  .helpbtn span{display:none}
+  .upd + .helpbtn{margin-left:12px}
+  #tour{position:fixed;inset:0;z-index:50}
+  #tour.nospot{background:rgba(10,12,16,.58)}
+  .t-spot{position:fixed;border-radius:12px;box-shadow:0 0 0 100vmax rgba(10,12,16,.58);pointer-events:none;transition:left .2s var(--ease),top .2s var(--ease),width .2s var(--ease),height .2s var(--ease)}
+  .t-spot[hidden]{display:none}
+  .t-card{position:fixed;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-surface);padding:16px;box-shadow:0 8px 28px rgba(10,12,16,.28)}
+  .t-step{margin:0 0 4px;color:var(--mut);font-size:12.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .t-card h3{margin:0 0 6px;font-size:17px;line-height:1.3}
+  .t-card p.t-body{margin:0;color:var(--mut);font-size:14.5px;line-height:1.5}
+  .t-card p.t-body b{color:var(--ink)}
+  .t-card ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+  .t-card li{font-size:14px;color:var(--mut)}
+  .t-card li b{color:var(--ink)}
+  .t-act{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
+  .t-nav{display:flex;gap:8px}
+  .t-btn{height:38px;padding:0 16px;border-radius:var(--r-inner);background:var(--brand);color:var(--brand-ink);font-weight:600;font-size:14px;transition:background .15s var(--ease)}
+  .t-btn:hover{background:var(--brand-press)}
+  .t-btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+  .t-btn.ghost:hover{background:var(--press)}
+  .t-dots{display:flex;gap:5px;margin-top:12px}
+  .t-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+  .t-dots i.on{background:var(--brand)}
+  @media (min-width:900px){.helpbtn span{display:inline}}
   /* floating */
   .totop{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.08);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease),background .15s var(--ease);z-index:6}
   .totop.on{opacity:1;transform:none;pointer-events:auto}
@@ -288,6 +315,7 @@
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
   <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
   <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
 </svg>
@@ -304,6 +332,7 @@
     <button data-tab="activity"><svg class="sm"><use href="#i-activity"/></svg>Activity</button>
   </nav>
   <span class="upd" id="updTop"></span>
+  <button class="helpbtn" id="tourBtn" aria-label="Take the quick tour"><svg class="sm"><use href="#i-help"/></svg><span>Guide</span></button>
 </div></header>
 
 <main class="wrap">
@@ -373,7 +402,7 @@
     </div>
     <div>
       <h4>Explore</h4>
-      <div class="flinks"><button data-tab="home">Home</button><button data-tab="saved">Saved</button><button data-tab="bought">Bought</button><button data-tab="activity">Activity</button></div>
+      <div class="flinks"><button data-tab="home">Home</button><button data-tab="saved">Saved</button><button data-tab="bought">Bought</button><button id="tourLink">Take the tour</button><button data-tab="activity">Activity</button></div>
     </div>
     <div>
       <h4>Before you buy</h4>
@@ -629,7 +658,7 @@ function renderPanel() {
     <div class="fp-head"><h2>Filters${act ? `<small>${act} applied</small>` : ""}</h2><button class="linkbtn" data-clear ${isFiltering() ? "" : "disabled"}>Clear all</button><button class="fp-close" id="closeF" aria-label="Close filters"><svg><use href="#i-x"/></svg></button></div>
     <div class="fp-body">
       ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], C(f.topics[id]), "checkbox", st.topics.has(id))).join(""))}
-      ${secHTML("kinds", "Type", ["dict", "words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join("") + '<p class="hint"><b>Dictionary:</b> every part is a standard English dictionary word. <b>Other real words:</b> made of real words, but not all in the strict dictionary list. <b>Random:</b> invented, not words.</p>')}
+      ${secHTML("kinds", "Type", ["dict", "words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join(""))}
       ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
       ${secHTML("lens", "Length", [3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
       ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
@@ -754,6 +783,72 @@ async function legacyLoad() { // old way: many small files (used only if summary
     if (!cached || (scrollY < 200 && !isFiltering())) { setAll(all); applySummary(sum); render(); }
   } catch (e) { if (!cached) await legacyLoad(); }
 })();
+
+/* ---------- first-time guide: a short, game-style tour (shown once, replay from "Guide") ---------- */
+const wide = () => innerWidth >= 900;
+const TOUR = [
+  { t: "Welcome to Domain Miner", b: () => "Find a <b>.com name that is really available</b>. This quick tour (about 30 seconds) shows you how everything works.", target: null },
+  { t: "Search any word", b: () => "Type a word like <b>sun</b> or <b>pilot</b> to see names that contain it.", target: () => ".tools .field" },
+  { t: "Pick the type of name", b: () => wide()
+      ? "Use <b>Type</b> to choose what kind of names you see:<ul><li><b>Dictionary words</b> every part is a standard English word</li><li><b>Other real words</b> made of real words, but not all in the strict dictionary list</li><li><b>Random</b> invented names, not words</li></ul>"
+      : "Tap <b>Filters</b> to narrow the list. <b>Type</b> has three kinds:<ul><li><b>Dictionary words</b> every part is a standard English word</li><li><b>Other real words</b> real words, not all in the strict dictionary list</li><li><b>Random</b> invented names, not words</li></ul>",
+    target: () => (wide() ? '[data-sec="kinds"]' : "#openF") },
+  { t: "Your names", b: () => "Tap a name to <b>copy</b> it. The bookmark <b>saves</b> it to your Saved tab.", target: () => "#top .card .name" },
+  { t: "Check it live", b: () => "Tap the <b>green check</b> to make sure this name is still free right now. If someone registered it, it moves to <b>Bought</b>.", target: () => "#top .card .chk" },
+  { t: "Buy it", b: () => "<b>Buy</b> opens a registrar where you can register the name before someone else does.", target: () => "#top .card .buy" },
+  { t: "Names others registered", b: () => "Names that someone else registered are listed under <b>Bought</b>, so you can see what is gone.", target: () => (wide() ? '.tabs [data-tab="bought"]' : 'nav.bottom [data-tab="bought"]') },
+];
+let tourI = -1, tourEl = null, tourRaf = 0;
+const tourTarget = (st0) => { const sel = st0.target ? st0.target() : null; return sel ? document.querySelector(sel) : null; };
+function tourBuild() {
+  if (tourEl) return;
+  tourEl = document.createElement("div"); tourEl.id = "tour";
+  tourEl.innerHTML = '<div class="t-spot" hidden></div><div class="t-card" role="dialog" aria-modal="true" aria-label="Quick tour"></div>';
+  tourEl.addEventListener("click", (e) => { const b = e.target.closest("[data-t]"); if (!b) return; const a = b.dataset.t; if (a === "next") tourShow(tourI + 1); else if (a === "back") tourShow(tourI - 1); else tourEnd(); });
+  document.body.appendChild(tourEl);
+}
+function tourShow(i) {
+  if (i < 0) return; if (i >= TOUR.length) return tourEnd();
+  if (st.tab !== "discover") go("discover");
+  tourBuild(); tourI = i;
+  const step = TOUR[i], card = tourEl.querySelector(".t-card"), last = i === TOUR.length - 1;
+  card.innerHTML = `<p class="t-step">Step ${i + 1} of ${TOUR.length}</p><h3>${step.t}</h3><p class="t-body">${step.b()}</p>
+    <div class="t-dots">${TOUR.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
+    <div class="t-act"><button class="linkbtn" data-t="skip">${last ? "Close" : "Skip tour"}</button><span class="t-nav">${i > 0 ? '<button class="t-btn ghost" data-t="back">Back</button>' : ""}<button class="t-btn" data-t="next">${i === 0 ? "Start" : last ? "Done" : "Next"}</button></span></div>`;
+  const el = tourTarget(step); if (el) el.scrollIntoView({ block: "center", inline: "nearest" });
+  tourPlace();
+}
+function tourPlace() {
+  if (!tourEl) return;
+  const step = TOUR[tourI], el = tourTarget(step), card = tourEl.querySelector(".t-card"), spot = tourEl.querySelector(".t-spot");
+  const r = el ? el.getBoundingClientRect() : null, vw = innerWidth, vh = innerHeight;
+  tourEl.classList.toggle("nospot", !r);
+  if (r) { const pad = 6; Object.assign(spot.style, { left: r.left - pad + "px", top: r.top - pad + "px", width: r.width + pad * 2 + "px", height: r.height + pad * 2 + "px" }); spot.hidden = false; } else spot.hidden = true;
+  card.style.cssText = "";
+  if (vw < 600) { // phones: dock the card at the top or bottom, away from the highlighted item
+    card.style.left = "12px"; card.style.right = "12px";
+    if (!r) card.style.top = Math.max(12, (vh - card.offsetHeight) / 2) + "px";
+    else if (r.top + r.height / 2 > vh / 2) card.style.top = "72px"; else card.style.bottom = "84px";
+    return;
+  }
+  const cw = Math.min(360, vw - 24); card.style.width = cw + "px"; const h = card.offsetHeight;
+  if (!r) { card.style.left = (vw - cw) / 2 + "px"; card.style.top = Math.max(12, (vh - h) / 2) + "px"; return; }
+  let left, top;
+  if (r.left < 300 && r.right + 14 + cw < vw) { left = r.right + 14; top = Math.max(12, Math.min(r.top, vh - h - 12)); } // sidebar item: card on its right
+  else { left = Math.max(12, Math.min(r.left, vw - cw - 12)); top = r.bottom + 14; if (top + h > vh - 12) top = r.top - h - 14; if (top < 12) top = Math.max(12, vh - h - 12); }
+  card.style.left = left + "px"; card.style.top = top + "px";
+}
+function tourEnd() { LS.set("dm.tour", 1); if (tourEl) { tourEl.remove(); tourEl = null; } tourI = -1; }
+const tourReplan = () => { if (tourEl) { cancelAnimationFrame(tourRaf); tourRaf = requestAnimationFrame(tourPlace); } };
+addEventListener("resize", tourReplan); addEventListener("scroll", tourReplan, { passive: true });
+document.addEventListener("keydown", (e) => { if (!tourEl) return; if (e.key === "Escape") tourEnd(); else if (e.key === "ArrowRight") tourShow(tourI + 1); else if (e.key === "ArrowLeft") tourShow(tourI - 1); });
+$("tourBtn").addEventListener("click", () => tourShow(0));
+$("tourLink").addEventListener("click", () => { scrollTo(0, 0); tourShow(0); });
+function tourAuto() { // first visit only, once the names are on screen
+  if (LS.get("dm.tour", 0)) return;
+  let n = 0; const iv = setInterval(() => { n++; if (document.querySelector("#top .card:not(.sk)") && st.tab === "discover") { clearInterval(iv); tourShow(0); } else if (n > 50) clearInterval(iv); }, 300);
+}
+tourAuto();
 </script>
 </body>
 </html>
