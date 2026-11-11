@@ -1,7 +1,7 @@
 // Saari data/found*.json + data/stats*.json ko ek compact index mein jodta hai, taaki website 46 files ki jagah 2 files padhe.
 // Output: data/summary.json (chhota: stats + top picks + pehle naam) aur data/all.json (saare naam, compact).
 // Run:  node build-index.mjs   (GitHub Actions mein "index" job yehi chalati hai)
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { friendly } from "./shortname.mjs";
 import { fileURLToPath } from "node:url";
@@ -20,8 +20,20 @@ const TOPICS = [
   ["shop", "shop store order customer client review support price cart pay market trade invoice"],
   ["nature", "ocean forest sky mountain river leaf tree stone sun moon star rain wind field valley lake sea garden flower meadow grass"],
   ["power", "swift quick fast rapid bold strong sharp prime peak rocket flash bolt spark pulse forge storm fire thunder power turbo"],
+  ["finance", "budget expense bill savings loan tax receipt income debt salary ledger money cash invoice"],
+  ["health", "health sleep mood symptom medicine checkup wellness stress diet vitamin doctor habit"],
+  ["fitness", "fitness workout exercise yoga cardio muscle protein calorie gym running stretch lift"],
+  ["food", "meal recipe grocery pantry menu kitchen snack lunch dinner spice breakfast dessert cooking"],
+  ["travel", "trip packing route hotel flight visa itinerary journey passport luggage tour travel"],
+  ["edu", "homework lesson exam quiz flashcard grade revision assignment timetable vocabulary study school"],
+  ["pets", "dog cat pet vet vaccine puppy kitten litter grooming"],
+  ["home", "chore repair cleaning laundry lease moving decor warranty furniture utility maintenance household"],
+  ["music", "setlist chord song lyric rehearsal melody rhythm playlist concert guitar piano riff"],
+  ["realestate", "rental mortgage listing tenant landlord property apartment viewing deposit renovation inspection"],
+  ["freelance", "freelance proposal portfolio timesheet gig deadline"],
 ];
 const topicMask = (x) => {
+  if (x.topic) { const k = TOPICS.findIndex((t) => t[0] === x.topic); if (k >= 0) return 1 << k; }
   const s = (x.n + " " + (x.m || "")).toLowerCase(); let m = 0;
   TOPICS.forEach((t, i) => { if (t[1].split(" ").some((k) => s.includes(k))) m |= 1 << i; });
   return m || 1 << TOPICS.length; // "other"
@@ -132,7 +144,7 @@ const partsOf = (x) => (x.p || (x.m && x.m.includes("+") ? x.m.replace(/\s/g, ""
 // ---- read everything ----
 const files = readdirSync(DATA);
 const seen = new Map();
-for (const f of files.filter((f) => /^found.*\.json$/.test(f)).sort()) for (const x of readJson(path.join(DATA, f), [])) if (x && x.n && (!seen.has(x.n) || (!seen.get(x.n).m && x.m))) seen.set(x.n, x); // meaning wali entry ko tarjeeh
+for (const f of [...files.filter((f) => /^found.*\.json$/.test(f)).sort().map((f) => path.join(DATA, f)), ...(existsSync(path.join(here, "seed")) ? readdirSync(path.join(here, "seed")).filter((f) => /\.json$/.test(f)).map((f) => path.join(here, "seed", f)) : [])]) for (const x of readJson(f, [])) if (x && x.n && (!seen.has(x.n) || (!seen.get(x.n).m && x.m))) seen.set(x.n, x); // meaning wali entry ko tarjeeh
 // verify.mjs ne jo naam ab registered paaye (state/taken.json) unko available list se hata do
 const takenMap = readJson(path.join(here, "state", "taken.json"), {});
 for (const n of Object.keys(takenMap)) seen.delete(n);

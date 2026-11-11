@@ -440,6 +440,17 @@ const TOPICS = [
   ["shop", "Shop & Customers", "shop store order customer client review support price cart pay market trade invoice"],
   ["nature", "Nature & Outdoors", "ocean forest sky mountain river leaf tree stone sun moon star rain wind field valley lake sea garden flower meadow grass"],
   ["power", "Speed & Power", "swift quick fast rapid bold strong sharp prime peak rocket flash bolt spark pulse forge storm fire thunder power turbo"],
+  ["finance", "Finance", "budget expense bill savings loan tax receipt income debt salary ledger money cash invoice"],
+  ["health", "Health", "health sleep mood symptom medicine checkup wellness stress diet vitamin doctor habit"],
+  ["fitness", "Fitness", "fitness workout exercise yoga cardio muscle protein calorie gym running stretch lift"],
+  ["food", "Food", "meal recipe grocery pantry menu kitchen snack lunch dinner spice breakfast dessert cooking"],
+  ["travel", "Travel", "trip packing route hotel flight visa itinerary journey passport luggage tour travel"],
+  ["edu", "Education", "homework lesson exam quiz flashcard grade revision assignment timetable vocabulary study school"],
+  ["pets", "Pets", "dog cat pet vet vaccine puppy kitten litter grooming"],
+  ["home", "Home", "chore repair cleaning laundry lease moving decor warranty furniture utility maintenance household"],
+  ["music", "Music", "setlist chord song lyric rehearsal melody rhythm playlist concert guitar piano riff"],
+  ["realestate", "Real estate", "rental mortgage listing tenant landlord property apartment viewing deposit renovation inspection"],
+  ["freelance", "Freelance", "freelance proposal portfolio timesheet gig deadline"],
 ];
 const topicsOf = (x) => { const s = (x.n + " " + (x.m || "")).toLowerCase(); const r = TOPICS.filter((t) => t[2].split(" ").some((k) => s.includes(k))).map((t) => t[0]); return r.length ? r : ["other"]; };
 const TOPIC_NAME = Object.fromEntries([...TOPICS.map((t) => [t[0], t[1]]), ["other", "Other"]]);
