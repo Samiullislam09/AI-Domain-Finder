@@ -213,6 +213,9 @@
   .fsec summary svg{width:16px;height:16px;color:var(--mut);transition:transform .2s var(--ease)}
   .fsec[open] summary svg{transform:rotate(180deg)}
   .flist{padding:0 8px 12px}
+  .hint{margin:8px 8px 4px;color:var(--mut);font-size:12.5px;line-height:1.4}
+  .hint b{color:var(--ink);font-weight:600}
+  .ea{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
   .opt{position:relative;display:flex;align-items:center;gap:10px;min-height:36px;padding:0 8px;border-radius:var(--r-inner);cursor:pointer;font-size:14px;transition:background .15s var(--ease)}
   .opt:hover{background:var(--press)}
   .opt input{position:absolute;opacity:0;pointer-events:none}
@@ -494,13 +497,12 @@ const emptyHTML = (title, text) => `<div class="empty"><svg><use href="#i-search
 
 /* filtering: several picks inside one group = OR, between groups = AND. Option counts respect the other active filters. */
 const FACETS = ["topics", "kinds", "words", "lens"];
-const keysOf = (x, f) => (f === "topics" ? x._t : f === "kinds" ? [isRand(x) ? "random" : "words"] : f === "words" ? [wordsOf(x)] : [lenKey(x.n.length)]);
+const keysOf = (x, f) => (f === "topics" ? x._t : f === "kinds" ? [x.d ? "dict" : isRand(x) ? "random" : "words"] : f === "words" ? [wordsOf(x)] : [lenKey(x.n.length)]);
 function facetPass(x, f) { return !st[f].size || keysOf(x, f).some((v) => st[f].has(v)); }
 function computeFacets() {
   const ql = st.q.trim().toLowerCase(), fac = { topics: {}, kinds: {}, words: {}, lens: {} };
   for (const x of st.all) {
     if (ql && !x.n.includes(ql) && !(x.m || "").toLowerCase().includes(ql)) continue;
-    if (st.sort === "dict" && !x.d) continue; // "Dictionary words only": counts follow the same rule
     const p = { topics: facetPass(x, "topics"), kinds: facetPass(x, "kinds"), words: facetPass(x, "words"), lens: facetPass(x, "lens") };
     for (const f of FACETS) if (FACETS.every((g) => g === f || p[g])) for (const v of keysOf(x, f)) fac[f][v] = (fac[f][v] || 0) + 1;
   }
@@ -508,8 +510,8 @@ function computeFacets() {
 }
 function filtered() {
   const ql = st.q.trim().toLowerCase();
-  const r = st.all.filter((x) => (st.sort !== "dict" || x.d) && (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "kinds") && facetPass(x, "words") && facetPass(x, "lens"));
-  if (st.sort === "best" || st.sort === "dict") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
+  const r = st.all.filter((x) => (!ql || x.n.includes(ql) || (x.m || "").toLowerCase().includes(ql)) && facetPass(x, "topics") && facetPass(x, "kinds") && facetPass(x, "words") && facetPass(x, "lens"));
+  if (st.sort === "best") r.sort((a, b) => rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "short") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || a.n.length - b.n.length || rank(b) - rank(a) || hOf(a) - hOf(b));
   else if (st.sort === "new") r.sort((a, b) => (b.q >= 60) - (a.q >= 60) || (b.t || "").localeCompare(a.t || "") || rank(b) - rank(a) || hOf(a) - hOf(b));
   else r.sort((a, b) => a.n.localeCompare(b.n));
@@ -572,7 +574,17 @@ function renderDiscover() {
   if (!topSec.hidden) { const t = st.topPre.length ? topPicks() : topPicksLegacy(); $("top").innerHTML = t.length ? t.map(cardHTML).join("") : ""; if (!t.length) topSec.hidden = true; }
   $("allH").textContent = heading();
   if (st.partial) { $("list").innerHTML = '<div class="card sk"><i></i><i></i></div>'.repeat(8); return; } // full list is still loading
-  if (!st.cur.length) $("list").innerHTML = emptyHTML("No names match", "Try removing a filter or a shorter search.");
+  if (!st.cur.length) {
+    const act = [];
+    for (const id of st.topics) act.push(["topics", id, TOPIC_NAME[id]]);
+    for (const k of st.kinds) act.push(["kinds", k, LABEL.kinds[k]]);
+    for (const w of st.words) act.push(["words", w, LABEL.words[w]]);
+    for (const k of st.lens) act.push(["lens", k, LABEL.lens[k]]);
+    if (st.q.trim()) act.push(["q", "", "“" + st.q.trim() + "”"]);
+    const small = [...st.lens].some((k) => k < 6), why = st.kinds.has("dict") && small ? "Dictionary names start at 6 letters (two 3-letter words); a single dictionary word of 3-5 letters is always already registered. " : "";
+    const btns = act.length ? '<div class="ea">' + act.map(([f, v, l]) => `<button class="linkbtn" data-rm="${f}" data-v="${v}">Remove ${esc(l)}</button>`).join("") + "</div>" : "";
+    $("list").innerHTML = emptyHTML("No names match", why + "Remove a filter to see more names." + btns);
+  }
   fill();
 }
 function renderSaved() {
@@ -597,10 +609,10 @@ function go(tab) {
 
 /* filter panel (left rail on desktop, bottom sheet on mobile) */
 const LABEL = {
-  kinds: { words: "Real words", random: "Random" },
+  kinds: { dict: "Dictionary words", words: "Other real words", random: "Random" },
   words: { 1: "1 word", 2: "2 words", 3: "3 words" },
   lens: { 3: "3 letters", 4: "4 letters", 5: "5 letters", 6: "6 letters", 7: "7 letters", 8: "8 letters", 9: "9 letters", 10: "10 letters", 11: "11-12 letters", 13: "13+ letters" },
-  sort: [["best", "Best match"], ["dict", "Dictionary words only"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
+  sort: [["best", "Best match"], ["short", "Shortest first"], ["new", "Newest first"], ["az", "A to Z"]],
 };
 function optHTML(f, v, label, count, type, checked) {
   const dis = count === 0 && !checked;
@@ -617,10 +629,10 @@ function renderPanel() {
     <div class="fp-head"><h2>Filters${act ? `<small>${act} applied</small>` : ""}</h2><button class="linkbtn" data-clear ${isFiltering() ? "" : "disabled"}>Clear all</button><button class="fp-close" id="closeF" aria-label="Close filters"><svg><use href="#i-x"/></svg></button></div>
     <div class="fp-body">
       ${secHTML("topics", "Topic", topics.map((id) => optHTML("topics", id, TOPIC_NAME[id], C(f.topics[id]), "checkbox", st.topics.has(id))).join(""))}
-      ${secHTML("kinds", "Type", ["words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join(""))}
+      ${secHTML("kinds", "Type", ["dict", "words", "random"].map((k) => optHTML("kinds", k, LABEL.kinds[k], C(f.kinds[k]), "checkbox", st.kinds.has(k))).join("") + '<p class="hint"><b>Dictionary:</b> every part is a standard English dictionary word. <b>Other real words:</b> made of real words, but not all in the strict dictionary list. <b>Random:</b> invented, not words.</p>')}
       ${secHTML("words", "Words", [1, 2, 3].map((w) => optHTML("words", w, LABEL.words[w], C(f.words[w]), "checkbox", st.words.has(w))).join(""))}
       ${secHTML("lens", "Length", [3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((k) => optHTML("lens", k, LABEL.lens[k], C(f.lens[k]), "checkbox", st.lens.has(k))).join(""))}
-      ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, v === "dict" && !st.partial ? st.all.reduce((n, x) => n + (x.d ? 1 : 0), 0) : null, "radio", st.sort === v)).join(""))}
+      ${secHTML("sort", "Sort by", LABEL.sort.map(([v, l]) => optHTML("sort", v, l, null, "radio", st.sort === v)).join(""))}
     </div>
     <div class="fp-foot"><p class="fp-note"><b>${n0(st.partial ? st.free : st.cur.length)}</b> ${st.partial ? "names" : "of " + n0(st.all.length) + " names"}</p><button class="apply" id="applyF">${st.partial ? "Show names" : "Show " + n0(st.cur.length) + " names"}</button></div>`;
   if (focus) { const [ff, vv] = focus.split(":"); const t = el.querySelector(`[data-f="${ff}"][value="${vv}"]`); if (t) t.focus({ preventScroll: true }); }
